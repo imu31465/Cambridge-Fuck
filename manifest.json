@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Cambridge Fuck",
+  "version": "19.7",
+  "description": "CambridgeOneの答えを抽出して表示・入力します。",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://content.cambridgeone.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://cambridgeone.org/*", "*://*.cambridgeone.org/*"],
+      "js": [
+        "content/state.js",
+        "content/question_formats.js",
+        "content/extraction.js",
+        "content/auto_answer.js",
+        "content/ui.js"
+      ],
+      "all_frames": true,
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "Cambridge Fuck",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
