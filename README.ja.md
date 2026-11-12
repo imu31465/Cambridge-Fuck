@@ -16,6 +16,7 @@ CambridgeOne のクイズの答えを抽出して、自動入力できる Chrome
 - **自動誤答停止** — 「不正解」フィードバックを検出すると全自動機能を即停止
 - **スピーキング課題ガード** — スピーキング課題を検出すると Auto Next / Auto Activity を停止
 - **速度設定** — 5段階（L1 Very Stable 〜 L5 Very Fast）。設定は次回起動時にも引き継がれます
+- **UI言語切替** — **自動**（ブラウザ言語に追従）/ **English** / **日本語** をポップアップから切替可能。ラベルもログも選択した言語で表示されます
 - **ポップアップUI** — 状態・ログ・Q&A一覧・速度スライダー・ワンクリック操作
 
 ## インストール
@@ -30,21 +31,22 @@ CambridgeOne のクイズの答えを抽出して、自動入力できる Chrome
 
 1. CambridgeOne のアクティビティページを開くと、自動でクイズデータのスキャンが始まります
 2. 拡張機能のアイコンをクリックしてポップアップを開く
-3. ボタン操作:
+3. **言語** セレクターで UI の言語を選択（**自動** = ブラウザ言語に追従 / **English** / **日本語**）
+4. ボタン操作:
 
-| ボタン | 説明 |
+| ボタン（日本語 / English） | 説明 |
 | --- | --- |
-| 再スキャン | 現在のページの答えを再抽出 |
-| 今すぐ自動回答 | Auto Answer を1回だけ実行 |
-| Auto Answer | 答えの自動入力を継続実行 |
-| Auto Next | Check / Next を自動クリック |
-| Auto Activity | NEXT ACTIVITY を自動クリック |
-| 自動誤答停止 | 不正解を検出したら全自動機能を停止 |
-| 状態更新 | ポップアップの状態を更新 |
-| バグ報告 | ログを Discord Webhook へ送信（下記参照） |
+| 再スキャン / Re-scan | 現在のページの答えを再抽出 |
+| 今すぐ自動回答 / Answer Now | 自動回答を1回だけ実行 |
+| 自動回答 / Auto Answer | 答えの自動入力を継続実行 |
+| 自動次へ / Auto Next | Check / Next を自動クリック |
+| 自動アクティビティ / Auto Activity | NEXT ACTIVITY を自動クリック |
+| 自動誤答停止 / Auto Wrong Stop | 不正解を検出したら全自動機能を停止 |
+| 状態更新 / Refresh | ポップアップの状態を更新 |
+| バグ報告 / Bug Report | ログを Discord Webhook へ送信（下記参照） |
 
-4. 速度は L1〜L5 のスライダーで調整
-5. ログと抽出した Q&A は **Logs** / **Q&A** タブで確認できます
+5. 速度は L1〜L5 のスライダーで調整
+6. ログと抽出した Q&A は **ログ** / **Q&A** タブで確認できます
 
 ## バグ報告 Webhook（任意設定）
 
@@ -71,17 +73,19 @@ const DISCORD_WEBHOOK_URL =
 ├── popup.css            # ポップアップのスタイル
 ├── popup.js             # ポップアップのロジック
 ├── content/
+│   ├── i18n.js              # 翻訳辞書（EN/JA）と言語切替
 │   ├── state.js             # 共有状態とログ出力ヘルパー
 │   ├── question_formats.js  # 形式ごとの問題・答え解析
 │   ├── extraction.js        # data.js の解析と答え抽出
-│   ├── auto_answer.js       # Auto Answer / Auto Next / Auto Activity / 自動誤答停止
+│   ├── auto_answer.js       # 自動回答 / 自動次へ / 自動アクティビティ / 自動誤答停止
 │   └── ui.js                # ポップアップとのコマンド中継と状態通知
+├── _locales/            # 拡張機能説明文のローカライズ（en, ja）
 └── icons/               # 拡張機能アイコン（16〜128 px）
 ```
 
 ## メモ
 
-- 設定（自動機能のON/OFF・速度）は `chrome.storage.local` に保存されます
+- 設定（自動機能のON/OFF・速度・UI言語）は `chrome.storage.local` に保存されます
 - コンテンツスクリプトは `cambridgeone.org` とその全サブフレームに注入されます
 - `data.js` はバックグラウンドの Service Worker 経由で取得します（ホスト権限: `https://content.cambridgeone.org/*`）
 

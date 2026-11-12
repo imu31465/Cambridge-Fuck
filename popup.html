@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
@@ -15,32 +15,44 @@
       <p id="build" class="build">Build -</p>
     </header>
 
-    <p id="statusLine" class="srOnly" aria-live="polite">接続中...</p>
+    <p id="statusLine" class="srOnly" aria-live="polite">Connecting...</p>
 
     <section class="controls">
-      <button id="scanBtn" type="button">再スキャン</button>
-      <button id="answerNowBtn" type="button">今すぐ自動回答</button>
+      <button id="scanBtn" type="button">Re-scan</button>
+      <button id="answerNowBtn" type="button">Answer Now</button>
       <button id="toggleAutoAnswerBtn" type="button">Auto Answer: OFF</button>
       <button id="toggleAutoActivityBtn" type="button">Auto Activity: OFF</button>
       <button id="toggleAutoNextBtn" type="button">Auto Next: OFF</button>
-      <button id="toggleAutoWrongStopBtn" type="button">自動誤答停止: OFF</button>
+      <button id="toggleAutoWrongStopBtn" type="button">Auto Wrong Stop: OFF</button>
       <div class="utilityActions">
-        <button id="refreshBtn" type="button">状態更新</button>
-        <button id="sendDebugReportBtn" type="button">バグ報告</button>
+        <button id="refreshBtn" type="button">Refresh</button>
+        <button id="sendDebugReportBtn" type="button">Bug Report</button>
       </div>
     </section>
 
-    <section class="speedControl">
-      <label for="speedLevelRange" class="speedLabel">
-        速度
-        <span id="speedLevelValue" class="speedValue">L3</span>
-      </label>
-      <input id="speedLevelRange" type="range" min="1" max="5" step="1" value="3" />
+    <section class="settingRow">
+      <div class="settingBox">
+        <label for="languageSelect" class="speedLabel">
+          <span id="languageLabelText">Language</span>
+        </label>
+        <select id="languageSelect" class="languageSelect">
+          <option value="auto">Auto</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+        </select>
+      </div>
+      <div class="settingBox">
+        <label for="speedLevelRange" class="speedLabel">
+          <span id="speedLabelText">Speed</span>
+          <span id="speedLevelValue" class="speedValue">L3</span>
+        </label>
+        <input id="speedLevelRange" type="range" min="1" max="5" step="1" value="3" />
+      </div>
     </section>
 
     <section class="logs">
       <div class="logsHeader">
-        <h2>Activity</h2>
+        <h2 id="activityHeader">Activity</h2>
         <div class="tabs" role="tablist" aria-label="View tabs">
           <button id="tabLogsBtn" class="tab is-active" type="button" role="tab" aria-selected="true">
             Logs
@@ -60,6 +72,7 @@
     </section>
   </main>
 
+  <script src="content/i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 

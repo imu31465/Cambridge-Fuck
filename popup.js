@@ -1,3 +1,5 @@
+const app = window.CambridgeSolver;
+const t = (key, ...args) => app.i18n.t(key, ...args);
 const ui = {
   build: document.getElementById("build"),
   statusLine: document.getElementById("statusLine"),
@@ -17,11 +19,17 @@ const ui = {
   speedLevelValue: document.getElementById("speedLevelValue"),
   refreshBtn: document.getElementById("refreshBtn"),
   sendDebugReportBtn: document.getElementById("sendDebugReportBtn"),
+  languageSelect: document.getElementById("languageSelect"),
+  languageLabelText: document.getElementById("languageLabelText"),
+  speedLabelText: document.getElementById("speedLabelText"),
+  activityHeader: document.getElementById("activityHeader"),
 };
 let activeTabId = null;
 let refreshTimer = null;
 let activeView = "logs";
 let lastLogsKey = "";
+let lastStatus = null;
+let lastErrorText = null;
 let lastQaKey = "";
 function setButtonsDisabled(disabled) {
   ui.scanBtn.disabled = disabled;
@@ -42,7 +50,7 @@ function queryActiveTab() {
         return;
       }
       if (!tabs || tabs.length === 0) {
-        reject(new Error("Active tab not found"));
+        reject(new Error(t("msg.activeTabNotFound")));
         return;
       }
       resolve(tabs[0]);
@@ -52,7 +60,7 @@ function queryActiveTab() {
 function sendCommand(command, extra = {}) {
   return new Promise((resolve, reject) => {
     if (!activeTabId) {
-      reject(new Error("Cambridge タブが見つかりません"));
+      reject(new Error(t("msg.cambridgeTabNotFound")));
       return;
     }
     chrome.tabs.sendMessage(
@@ -64,11 +72,11 @@ function sendCommand(command, extra = {}) {
           return;
         }
         if (!response) {
-          reject(new Error("Content script response is empty"));
+          reject(new Error(t("msg.emptyResponse")));
           return;
         }
         if (response.ok === false) {
-          reject(new Error(response.error || "Command failed"));
+          reject(new Error(response.error || t("msg.commandFailed")));
           return;
         }
         resolve(response);
@@ -87,6 +95,27 @@ function setActiveView(nextView) {
   ui.qaPanel.classList.toggle("is-active", !showLogs);
   ui.logsPanel.setAttribute("aria-hidden", showLogs ? "false" : "true");
   ui.qaPanel.setAttribute("aria-hidden", showLogs ? "true" : "false");
+}
+function renderStaticStrings() {
+  document.documentElement.lang = app.i18n.getLocale();
+  ui.scanBtn.textContent = t("btn.scan");
+  ui.answerNowBtn.textContent = t("btn.answerNow");
+  ui.refreshBtn.textContent = t("btn.refresh");
+  ui.sendDebugReportBtn.textContent = t("btn.bugReport");
+  ui.languageLabelText.textContent = t("ui.language");
+  ui.speedLabelText.textContent = t("labels.speed");
+  ui.activityHeader.textContent = t("tabs.activity");
+  ui.tabLogsBtn.textContent = t("tabs.logs");
+  ui.tabQaBtn.textContent = t("tabs.qa");
+  ui.speedLevelRange.setAttribute(
+    "aria-label",
+    t("labels.speedLevel", Number(ui.speedLevelRange.value || 3)),
+  );
+  const optionKeys = ["ui.auto", "ui.english", "ui.japanese"];
+  Array.from(ui.languageSelect.options).forEach((option, index) => {
+    if (optionKeys[index]) option.textContent = t(optionKeys[index]);
+  });
+  ui.languageSelect.value = app.i18n.getPref();
 }
 function getLogTone(tag) {
   if (tag === "Q") return "success";
@@ -152,7 +181,7 @@ function renderLogs(logs) {
   lastLogsKey = nextKey;
   ui.logsArea.textContent = "";
   if (logLines.length === 0) {
-    appendEmptyLine(ui.logsArea, "(no logs)");
+    appendEmptyLine(ui.logsArea, t("popup.noLogs"));
     restoreScrollState(ui.logsArea, scrollState);
     return;
   }
@@ -190,7 +219,7 @@ function renderQaEntries(entries) {
   lastQaKey = nextKey;
   ui.qaArea.textContent = "";
   if (rows.length === 0) {
-    appendEmptyLine(ui.qaArea, "(no Q&A)");
+    appendEmptyLine(ui.qaArea, t("popup.noQA"));
     restoreScrollState(ui.qaArea, scrollState);
     return;
   }
@@ -214,46 +243,50 @@ function renderQaEntries(entries) {
 }
 function renderStatus(status) {
   if (!status || status.ok === false) return;
-  ui.build.textContent = `Build ${status.buildId || "-"}`;
-  ui.statusLine.textContent = "接続済み";
-  ui.toggleAutoAnswerBtn.textContent = status.isAutoAnswerActive
-    ? "Auto Answer: ON"
-    : "Auto Answer: OFF";
+  lastStatus = status;
+  lastErrorText = null;
+  ui.build.textContent = t("popup.buildLabel", status.buildId || "-");
+  ui.statusLine.textContent = t("popup.connected");
+  ui.toggleAutoAnswerBtn.textContent = `${t("btn.autoAnswer")}: ${
+    status.isAutoAnswerActive ? "ON" : "OFF"
+  }`;
   ui.toggleAutoAnswerBtn.style.backgroundColor = status.isAutoAnswerActive
     ? "#1f7a42"
     : "#222a34";
-  ui.toggleAutoNextBtn.textContent = status.isAutoNextActive
-    ? "Auto Next: ON"
-    : "Auto Next: OFF";
+  ui.toggleAutoNextBtn.textContent = `${t("btn.autoNext")}: ${
+    status.isAutoNextActive ? "ON" : "OFF"
+  }`;
   ui.toggleAutoNextBtn.style.backgroundColor = status.isAutoNextActive
     ? "#1f7a42"
     : "#222a34";
-  ui.toggleAutoActivityBtn.textContent = status.isAutoActivityActive
-    ? "Auto Activity: ON"
-    : "Auto Activity: OFF";
+  ui.toggleAutoActivityBtn.textContent = `${t("btn.autoActivity")}: ${
+    status.isAutoActivityActive ? "ON" : "OFF"
+  }`;
   ui.toggleAutoActivityBtn.style.backgroundColor = status.isAutoActivityActive
     ? "#1f7a42"
     : "#222a34";
-  ui.toggleAutoWrongStopBtn.textContent = status.isAutoWrongStopActive
-    ? "自動誤答停止: ON"
-    : "自動誤答停止: OFF";
+  ui.toggleAutoWrongStopBtn.textContent = `${t("btn.autoWrongStop")}: ${
+    status.isAutoWrongStopActive ? "ON" : "OFF"
+  }`;
   ui.toggleAutoWrongStopBtn.style.backgroundColor = status.isAutoWrongStopActive
     ? "#1f7a42"
     : "#222a34";
   const speedLevel = Math.max(1, Math.min(5, Number(status.speedLevel || 3)));
   ui.speedLevelRange.value = String(speedLevel);
   ui.speedLevelValue.textContent = `L${speedLevel}`;
+  ui.speedLevelRange.setAttribute("aria-label", t("labels.speedLevel", speedLevel));
   renderLogs(Array.isArray(status.recentLogs) ? status.recentLogs : []);
   renderQaEntries(Array.isArray(status.qaEntries) ? status.qaEntries : []);
 }
 function renderError(errorMessage) {
+  lastErrorText = errorMessage || "";
   if (ui.statusLine) ui.statusLine.textContent = errorMessage;
   lastLogsKey = "";
   lastQaKey = "";
   if (ui.logsArea) ui.logsArea.textContent = "";
   if (ui.qaArea) ui.qaArea.textContent = "";
-  appendEmptyLine(ui.logsArea, errorMessage || "(content script 未接続)");
-  appendEmptyLine(ui.qaArea, "(content script 未接続)");
+  appendEmptyLine(ui.logsArea, errorMessage || t("popup.contentScriptDisconnected"));
+  appendEmptyLine(ui.qaArea, t("popup.contentScriptDisconnected"));
   setButtonsDisabled(true);
 }
 async function refreshStatus() {
@@ -277,6 +310,12 @@ async function invoke(command, extra = {}) {
 }
 async function initPopup() {
   setButtonsDisabled(true);
+  app.i18n.onChange(() => {
+    renderStaticStrings();
+    if (lastStatus) renderStatus(lastStatus);
+    else if (lastErrorText !== null) renderError(lastErrorText);
+  });
+  renderStaticStrings();
   try {
     const tab = await queryActiveTab();
     activeTabId = tab.id;
@@ -305,6 +344,7 @@ async function initPopup() {
       Math.min(5, Number(ui.speedLevelRange.value || 3)),
     );
     ui.speedLevelValue.textContent = `L${level}`;
+    ui.speedLevelRange.setAttribute("aria-label", t("labels.speedLevel", level));
   });
   ui.speedLevelRange.addEventListener("change", () => {
     const level = Math.max(
@@ -313,17 +353,20 @@ async function initPopup() {
     );
     invoke("setSpeedLevel", { value: level });
   });
+  ui.languageSelect.addEventListener("change", () => {
+    app.i18n.setLanguage(ui.languageSelect.value);
+  });
   ui.refreshBtn.addEventListener("click", () => refreshStatus());
   ui.sendDebugReportBtn.addEventListener("click", async () => {
     const originalText = ui.sendDebugReportBtn.textContent;
     ui.sendDebugReportBtn.disabled = true;
-    ui.sendDebugReportBtn.textContent = "送信中...";
+    ui.sendDebugReportBtn.textContent = t("popup.sending");
     try {
       const status = await sendCommand("sendDebugReport");
       setButtonsDisabled(false);
       renderStatus(status);
     } catch (err) {
-      const message = `送信失敗: ${err.message || String(err)}`;
+      const message = t("popup.sendFailed", err.message || String(err));
       if (ui.statusLine) ui.statusLine.textContent = message;
       if (ui.logsArea) ui.logsArea.textContent = "";
       appendEmptyLine(ui.logsArea, message);

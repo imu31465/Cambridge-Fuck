@@ -16,6 +16,7 @@ A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne an
 - **Auto Wrong Stop (自動誤答停止)** — stops all automations as soon as an "Incorrect" feedback is detected
 - **Speaking activity guard** — pauses Auto Next / Auto Activity on speaking tasks
 - **Speed control** — 5 levels (L1 Very Stable … L5 Very Fast), saved between sessions
+- **UI language** — **Auto** (follows the browser), **English**, or **日本語**, switchable from the popup; labels and log messages are localized
 - **Popup UI** — status, logs, Q&A list, speed slider and one-click controls
 
 ## Installation
@@ -30,21 +31,22 @@ A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne an
 
 1. Open any CambridgeOne activity page — the extension scans for quiz data automatically
 2. Click the extension icon to open the popup
-3. Use the buttons:
+3. Pick the UI language from the **Language** selector: **Auto** (follows the browser), **English**, or **日本語**
+4. Use the buttons:
 
-| Button | Description |
+| Button (EN / JA) | Description |
 | --- | --- |
-| 再スキャン (Re-scan) | Extract answers again for the current page |
-| 今すぐ自動回答 (Answer now) | Run Auto Answer once |
-| Auto Answer | Continuously fill answers automatically |
-| Auto Next | Auto-click Check / Next |
-| Auto Activity | Auto-click NEXT ACTIVITY |
-| 自動誤答停止 (Auto Wrong Stop) | Stop everything when an incorrect answer is detected |
-| 状態更新 (Refresh) | Refresh the popup status |
-| バグ報告 (Bug report) | Send logs to a Discord webhook (see below) |
+| Re-scan / 再スキャン | Extract answers again for the current page |
+| Answer Now / 今すぐ自動回答 | Run Auto Answer once |
+| Auto Answer / 自動回答 | Continuously fill answers automatically |
+| Auto Next / 自動次へ | Auto-click Check / Next |
+| Auto Activity / 自動アクティビティ | Auto-click NEXT ACTIVITY |
+| Auto Wrong Stop / 自動誤答停止 | Stop everything when an incorrect answer is detected |
+| Refresh / 状態更新 | Refresh the popup status |
+| Bug Report / バグ報告 | Send logs to a Discord webhook (see below) |
 
-4. Adjust the speed with the L1–L5 slider
-5. Logs and extracted Q&A can be viewed in the **Logs** / **Q&A** tabs
+5. Adjust the speed with the L1–L5 slider
+6. Logs and extracted Q&A can be viewed in the **Logs** / **Q&A** tabs
 
 ## Bug report webhook (optional)
 
@@ -71,17 +73,19 @@ If the placeholder is left as-is, the popup shows an error and nothing is sent.
 ├── popup.css            # Popup styles
 ├── popup.js             # Popup logic
 ├── content/
+│   ├── i18n.js              # Translations (EN/JA) and language switching
 │   ├── state.js             # Shared state and logging helpers
 │   ├── question_formats.js  # Question / answer parsing per format
 │   ├── extraction.js        # data.js parsing and answer extraction
 │   ├── auto_answer.js       # Auto Answer / Auto Next / Auto Activity / Auto Wrong Stop
 │   └── ui.js                # Popup command bridge and status reporting
+├── _locales/            # Localized extension description (en, ja)
 └── icons/               # Extension icons (16–128 px)
 ```
 
 ## Notes
 
-- Settings (auto toggles, speed level) are saved in `chrome.storage.local`
+- Settings (auto toggles, speed level, UI language) are saved in `chrome.storage.local`
 - The content script is injected into `cambridgeone.org` and all of its subframes
 - `data.js` is fetched through the background service worker (host permission: `https://content.cambridgeone.org/*`)
 

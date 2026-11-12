@@ -54,7 +54,7 @@
             reject(
               new Error(
                 (response && response.error) ||
-                  "Discord送信用データを作成できませんでした",
+                  app.i18n.t("msg.discordFormFailed"),
               ),
             );
             return;
@@ -191,7 +191,7 @@
         sendDebugReportToDiscord()
           .then(() => {
             app.logToUI(
-              "%c[INFO]%c Discord へ送信要求を出しました。到着は Discord 側で確認してください。",
+              `%c[INFO]%c ${app.i18n.t("msg.discordQueued")}`,
               app.styles.success,
               "",
             );
@@ -199,7 +199,7 @@
           })
           .catch((err) => {
             app.logToUI(
-              `%c[ERROR]%c バグ報告の送信に失敗: ${err && err.message ? err.message : err}`,
+              `%c[ERROR]%c ${app.i18n.t("msg.discordSendFailed", err && err.message ? err.message : err)}`,
               app.styles.bad,
               "",
             );
@@ -212,7 +212,7 @@
       default:
         sendResponse({
           ok: false,
-          error: `Unknown command: ${command || "(empty)"}`,
+          error: app.i18n.t("msg.unknownCommand", command || "-"),
         });
     }
   }

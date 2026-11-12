@@ -17,7 +17,7 @@
   function parseAjaxData(dataJsContent) {
     const match = dataJsContent.match(/ajaxData\s*=\s*(\{[\s\S]+?\});/);
     if (!match || !match[1]) {
-      app.logToUI("%c[ERROR]%c ajaxDataが見つかりません。", styles.bad, "");
+      app.logToUI(`%c[ERROR]%c ${app.i18n.t("log.ajaxNotFound")}`, styles.bad, "");
       return null;
     }
     const decodedString = decodeHtmlEntitiesRepeatedly(match[1]);
@@ -25,7 +25,7 @@
       return JSON.parse(decodedString);
     } catch (err) {
       app.logToUI(
-        `%c[ERROR]%c JSONの解析に失敗しました: ${err.message}`,
+        `%c[ERROR]%c ${app.i18n.t("log.jsonParseFailed", err.message)}`,
         styles.bad,
         ""
       );
@@ -216,12 +216,12 @@
       const attachmentText = extractAttachmentTextFromSoup(soup, xml);
       if (attachmentText) {
         app.logToUI(
-          `%c[ATTACH]%c ${key}: ${attachmentText.slice(0, 220)}`,
+          `%c[ATTACH]%c ${app.i18n.t("log.attach")}: ${key}: ${attachmentText.slice(0, 220)}`,
           styles.info,
           ""
         );
       } else {
-        app.logToUI(`%c[ATTACH]%c ${key}: (empty)`, styles.info, "");
+        app.logToUI(`%c[ATTACH]%c ${app.i18n.t("log.attach")}: ${key}: ${app.i18n.t("log.attachEmpty")}`, styles.info, "");
       }
       if (currentAnswers.length > 0) {
         app.state.extractedItems.push({
@@ -279,7 +279,7 @@
     });
     if (app.state.extractedAnswers.length > 0) {
       app.logToUI(
-        `%c[SUCCESS]%c ${app.state.extractedAnswers.length}個の答えを抽出しました。`,
+        `%c[SUCCESS]%c ${app.i18n.t("log.extractedCount", app.state.extractedAnswers.length)}`,
         styles.success,
         ""
       );
@@ -287,7 +287,7 @@
         app.maybeAutoAnswer("extraction");
       }
     } else {
-      app.logToUI("%c[WARN]%c 答えが見つかりませんでした。", styles.bad, "");
+      app.logToUI(`%c[WARN]%c ${app.i18n.t("log.answersNotFound")}`, styles.bad, "");
     }
   }
   function findDataJsUrlInDocument(doc) {
@@ -311,23 +311,23 @@
   function processQuizData(url) {
     app.state.lastDataJsUrl = url;
     app.logToUI(
-      `%c[SUCCESS]%c data.js URLを検出: ${url}`,
+      `%c[SUCCESS]%c ${app.i18n.t("log.officialPrefix")}${app.i18n.t("log.dataJsDetected", url)}`,
       "color: green; font-weight: bold;",
       ""
     );
-    app.logToUI("%c[INFO]%c 解析を開始します...", styles.info, "");
+    app.logToUI(`%c[INFO]%c ${app.i18n.t("log.parsingStarted")}`, styles.info, "");
     chrome.runtime.sendMessage({ type: "fetchData", url }, (response) => {
       if (response && response.success) {
         mainParser(response.data);
       } else {
-        app.logToUI("%c[ERROR]%c 取得に失敗しました。", styles.bad, "");
+        app.logToUI(`%c[ERROR]%c ${app.i18n.t("log.fetchFailed")}`, styles.bad, "");
       }
     });
   }
   function runExtractionLogic() {
     app.clearAllLogs();
     app.logToUI(
-      "%c[SCANNING]%c data.js を検索中...",
+      `%c[SCANNING]%c ${app.i18n.t("log.scanning")}`,
       "color: magenta; font-weight: bold;",
       ""
     );
@@ -353,7 +353,7 @@
     setTimeout(() => {
       if (!found && app.state.currentObserver) {
         app.logToUI(
-          "%c[INFO]%c タイムアウト: data.jsが見つかりません。",
+          `%c[INFO]%c ${app.i18n.t("log.scanTimeout")}`,
           styles.info,
           ""
         );
@@ -374,7 +374,7 @@
         if (currentUrl === app.state.lastUrl) return;
         app.state.lastUrl = currentUrl;
         app.logToUI(
-          `%c[NAVIGATED]%c URL変化を検出(${reason})。再スキャンします。`,
+          `%c[NAVIGATED]%c ${app.i18n.t("log.navigated", reason)}`,
           styles.nav,
           ""
         );

@@ -83,12 +83,29 @@ body {
   background: #9a4b18;
 }
 
-.speedControl {
+.settingRow {
+  display: flex;
+  gap: 8px;
   margin-bottom: 10px;
+}
+
+.settingBox {
+  flex: 1;
+  min-width: 0;
   padding: 8px;
   border: 1px solid #2a3240;
   border-radius: 8px;
   background: #181d24;
+}
+
+.languageSelect {
+  width: 100%;
+  border: 1px solid #2a3240;
+  border-radius: 6px;
+  padding: 5px 6px;
+  color: #f2f4f7;
+  background: #222a34;
+  font-size: 12px;
 }
 
 .speedLabel {

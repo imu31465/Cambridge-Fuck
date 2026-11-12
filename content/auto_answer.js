@@ -1267,7 +1267,7 @@
       persistAutoSettings();
       if (log) {
         app.logToUI(
-          "%c[AUTO-WRONG-STOP]%c 不正解フィードバックを検出したため、自動系をすべて停止しました。",
+          `%c[AUTO-WRONG-STOP]%c ${app.i18n.t("log.autoWrongStopStoppedAll")}`,
           styles.alert,
           "",
         );
@@ -1293,11 +1293,11 @@
     if (!buttonElement) return;
     if (app.state.isAutoWrongStopActive) {
       buttonElement.style.backgroundColor = "#28a745";
-      buttonElement.textContent = "自動誤答停止: ON";
+      buttonElement.textContent = `${app.i18n.t("btn.autoWrongStop")}: ON`;
       return;
     }
     buttonElement.style.backgroundColor = "#6c757d";
-    buttonElement.textContent = "自動誤答停止: OFF";
+    buttonElement.textContent = `${app.i18n.t("btn.autoWrongStop")}: OFF`;
   }
   function setAutoWrongStopEnabled(nextActive, options = {}) {
     const { buttonElement = null, persist = true, log = true } = options;
@@ -1316,7 +1316,7 @@
       checkIncorrectFeedbackStop();
       if (log) {
         app.logToUI(
-          "%c[AUTO-WRONG-STOP]%c 自動誤答停止を ON にしました。",
+          `%c[AUTO-WRONG-STOP]%c ${app.i18n.t("log.autoWrongStopOn")}`,
           styles.info,
           "",
         );
@@ -1325,7 +1325,7 @@
       app.state.incorrectFeedbackButtonSeen = false;
       if (log) {
         app.logToUI(
-          "%c[AUTO-WRONG-STOP]%c 自動誤答停止を OFF にしました。",
+          `%c[AUTO-WRONG-STOP]%c ${app.i18n.t("log.autoWrongStopOff")}`,
           styles.info,
           "",
         );
@@ -1382,9 +1382,8 @@
     }
     if (persist) persistAutoSettings();
     if (log) {
-      const profile = getTimingProfile();
       app.logToUI(
-        `%c[INFO]%c 速度設定を変更: L${level} (${profile.label})`,
+        `%c[INFO]%c ${app.i18n.t("log.speedChanged", level, app.i18n.t(`speed.${level}`))}`,
         styles.info,
         "",
       );
@@ -2463,11 +2462,11 @@
     if (!buttonElement) return;
     if (app.state.isAutoAnswerActive) {
       buttonElement.style.backgroundColor = "#28a745";
-      buttonElement.textContent = "Auto Answer: ON";
+      buttonElement.textContent = `${app.i18n.t("btn.autoAnswer")}: ON`;
       return;
     }
     buttonElement.style.backgroundColor = "#6c757d";
-    buttonElement.textContent = "Auto Answer: OFF";
+    buttonElement.textContent = `${app.i18n.t("btn.autoAnswer")}: OFF`;
   }
   function setAutoAnswerEnabled(nextActive, options = {}) {
     const {
@@ -2482,7 +2481,7 @@
     if (app.state.isAutoAnswerActive) {
       if (log)
         app.logToUI(
-          "%c[AUTO]%c Auto Answer を ON にしました。",
+          `%c[AUTO]%c ${app.i18n.t("log.autoAnswerOn")}`,
           styles.info,
           "",
         );
@@ -2492,7 +2491,7 @@
       stopAutoAnswer();
       if (log)
         app.logToUI(
-          "%c[AUTO]%c Auto Answer を OFF にしました。",
+          `%c[AUTO]%c ${app.i18n.t("log.autoAnswerOff")}`,
           styles.info,
           "",
         );
@@ -2578,20 +2577,20 @@
       if (elapsed > AUTO_ANSWER_STUCK_TIMEOUT_MS) {
         app.state.isAutoAnswerRunning = false;
         app.logToUI(
-          "%c[WARN]%c Auto Answer の実行状態が固着していたため復旧しました。",
+          `%c[WARN]%c ${app.i18n.t("log.autoAnswerStuckRecovered")}`,
           styles.alert,
           "",
         );
       } else {
         if (quietIfRunning) return;
-        app.logToUI("%c[INFO]%c 自動回答はすでに実行中です。", styles.info, "");
+        app.logToUI(`%c[INFO]%c ${app.i18n.t("log.autoAnswerAlreadyRunning")}`, styles.info, "");
         return;
       }
     }
     if (app.state.extractedAnswers.length === 0) {
       if (!suppressEmptyWarn) {
         app.logToUI(
-          "%c[WARN]%c 答えリストが空です。「再取得」を押してください。",
+          `%c[WARN]%c ${app.i18n.t("log.autoAnswerNoAnswers")}`,
           styles.alert,
           "",
         );
@@ -2612,7 +2611,7 @@
     ) {
       if (!suppressDuplicateLog) {
         app.logToUI(
-          "%c[INFO]%c 同一データへの重複自動実行をスキップしました。",
+          `%c[INFO]%c ${app.i18n.t("log.autoAnswerDuplicateSkip")}`,
           styles.info,
           "",
         );
@@ -2623,7 +2622,7 @@
     app.state.lastAutoAnswerStartAt = now;
     if (!suppressStartLog) {
       app.logToUI(
-        `%c[AUTO]%c 自動回答ロジックを開始します... (${trigger})`,
+        `%c[AUTO]%c ${app.i18n.t("log.autoAnswerStarted", trigger)}`,
         styles.info,
         "",
       );
@@ -2672,7 +2671,7 @@
     });
     if (expandedCount > 0) {
       app.logToUI(
-        `%c[EXPAND]%c ${expandedCount}個の折りたたまれた項目を展開しました。`,
+        `%c[EXPAND]%c ${app.i18n.t("log.expandedItems", expandedCount)}`,
         styles.info,
         "",
       );
@@ -2742,7 +2741,7 @@
     let isGapMode = gapTargets.length > 0 && !hasMatchInteractionMode;
     let gapAssignmentPlan = null;
     app.logToUI(
-      `%c[DEBUG]%c ターゲット検出: gaps=${gapTargets.length}, match=${matchTargets.length}, dropdown=${orderedDropdownTargets.length}, text=${orderedTextTargets.length}, containers=${interactionContainers.length}, roots=${searchRoots.length}`,
+      `%c[DEBUG]%c ${app.i18n.t("log.targetDetection", gapTargets.length, matchTargets.length, orderedDropdownTargets.length, orderedTextTargets.length, interactionContainers.length, searchRoots.length)}`,
       styles.info,
       "",
     );
@@ -2776,7 +2775,7 @@
         if (gapAssignmentPlan.length > 0) {
           answersToProcess = gapAssignmentPlan.map((entry) => entry.answer);
           app.logToUI(
-            `%c[INFO]%c Gap分類モード: ${groupedGapPlanCandidate.sourceKey} / groups=${groupedGapPlanCandidate.groupsCount} / targets=${groupedGapPlanCandidate.targetCount} / answers=${answersToProcess.length}`,
+            `%c[INFO]%c ${app.i18n.t("log.gapGroupMode", groupedGapPlanCandidate.sourceKey, groupedGapPlanCandidate.groupsCount, groupedGapPlanCandidate.targetCount, answersToProcess.length)}`,
             styles.info,
             "",
           );
@@ -2786,7 +2785,7 @@
         const wordPool = collectVisibleWordPool(gapScopeRoot);
         const contextHints = getGapContextHints(gapTargets);
         app.logToUI(
-          `%c[DEBUG]%c 空所候補語数: ${wordPool.length}`,
+          `%c[DEBUG]%c ${app.i18n.t("log.wordPoolCount", wordPool.length)}`,
           styles.info,
           "",
         );
@@ -2801,7 +2800,7 @@
             gapTargets.length,
           );
           app.logToUI(
-            `%c[INFO]%c 問題一致: ${selectedFromItems.sourceKey} (score=${selectedFromItems.score}, match=${selectedFromItems.matches})`,
+            `%c[INFO]%c ${app.i18n.t("log.answerMatch", selectedFromItems.sourceKey, selectedFromItems.score, selectedFromItems.matches)}`,
             styles.info,
             "",
           );
@@ -2816,7 +2815,7 @@
       }
       if (answersToProcess.length === 0) {
         app.logToUI(
-          "%c[INFO]%c 空所の候補回答が見つからなかったため停止します。",
+          `%c[INFO]%c ${app.i18n.t("log.noCandidateAnswers")}`,
           styles.info,
           "",
         );
@@ -2824,12 +2823,12 @@
         return;
       }
       app.logToUI(
-        `%c[INFO]%c 空所ターゲット: ${gapTargets.length}件 / 回答候補: ${answersToProcess.length}件`,
+        `%c[INFO]%c ${app.i18n.t("log.gapTargets", gapTargets.length, answersToProcess.length)}`,
         styles.info,
         "",
       );
       app.logToUI(
-        `%c[INFO]%c 選択回答: ${answersToProcess.join(" | ")}`,
+        `%c[INFO]%c ${app.i18n.t("log.answerSelection", answersToProcess.join(" | "))}`,
         styles.info,
         "",
       );
@@ -2843,7 +2842,7 @@
       directDropdownMode = false;
       isGapMode = false;
       app.logToUI(
-        `%c[INFO]%c Match直接モード: ${preliminaryMatchPlan.sourceKey} / groups=${preliminaryMatchPlan.groupsCount} / targets=${preliminaryMatchPlan.targetCount} / answers=${answersToProcess.length}`,
+        `%c[INFO]%c ${app.i18n.t("log.matchDirectMode", preliminaryMatchPlan.sourceKey, preliminaryMatchPlan.groupsCount, preliminaryMatchPlan.targetCount, answersToProcess.length)}`,
         styles.info,
         "",
       );
@@ -2983,7 +2982,7 @@
       );
       if (tiedSourceKeys.length > 1 && orderedDropdownTargets.length < 2) {
         app.logToUI(
-          `%c[WARN]%c 問題文を照合できず候補が曖昧なため回答を停止します: ${tiedSourceKeys.join(" / ")} / context=${nonGapContextHints.join(" | ").slice(0, 120) || "-"}`,
+          `%c[WARN]%c ${app.i18n.t("log.ambiguousStop", tiedSourceKeys.join(" / "), nonGapContextHints.join(" | ").slice(0, 120) || "-")}`,
           styles.alert,
           "",
         );
@@ -3006,7 +3005,7 @@
         nonGapAnswerPlan = bestCandidate.plan;
         answersToProcess = nonGapAnswerPlan.map((entry) => entry.answer);
         app.logToUI(
-          `%c[INFO]%c 問題一致(複数回答): ${bestCandidate.sourceKey} / groups=${bestCandidate.groupsCount}`,
+          `%c[INFO]%c ${app.i18n.t("log.answerMatchMultiple", bestCandidate.sourceKey, bestCandidate.groupsCount)}`,
           styles.info,
           "",
         );
@@ -3022,15 +3021,15 @@
               `${row.sourceKey}:score=${row.score},groups=${row.groupsCount},ctx=${row.contextMatches},att=${row.attachmentMatched ? "Y" : "N"},sim=${row.attachmentSimilarity}`,
           )
           .join(" | ");
-        app.logToUI(`%c[DEBUG]%c 候補スコア上位: ${summary}`, styles.info, "");
+        app.logToUI(`%c[DEBUG]%c ${app.i18n.t("log.topCandidates", summary)}`, styles.info, "");
         app.logToUI(
-          `%c[DEBUG]%c currentAttachment=${String(currentAttachmentText || "").slice(0, 180)}`,
+          `%c[DEBUG]%c ${app.i18n.t("log.debugCurrentAttachment", String(currentAttachmentText || "").slice(0, 180))}`,
           styles.info,
           "",
         );
         sortedDebug.forEach((row) => {
           app.logToUI(
-            `%c[DEBUG]%c itemAttachment(${row.sourceKey})=${String(row.attachmentPreview || "").slice(0, 180)}`,
+            `%c[DEBUG]%c ${app.i18n.t("log.debugItemAttachment", row.sourceKey, String(row.attachmentPreview || "").slice(0, 180))}`,
             styles.info,
             "",
           );
@@ -3081,7 +3080,7 @@
           .filter((answer) => answer.length > 0)
           .slice(0, orderedDropdownTargets.length);
         app.logToUI(
-          `%c[INFO]%c Dropdownアイテム進行: ${selectedItem.sourceKey} (${itemCursor + 1}/${dropdownRankedCandidates.length}) trigger=${trigger}`,
+          `%c[INFO]%c ${app.i18n.t("log.dropdownItemProgress", selectedItem.sourceKey, itemCursor + 1, dropdownRankedCandidates.length, trigger)}`,
           styles.info,
           "",
         );
@@ -3093,7 +3092,7 @@
       ) {
         directDropdownAnswers = bestCandidate.answersFlat.slice();
         app.logToUI(
-          `%c[INFO]%c Dropdownページ一致: ${bestCandidate.sourceKey}`,
+          `%c[INFO]%c ${app.i18n.t("log.dropdownPageMatch", bestCandidate.sourceKey)}`,
           styles.info,
           "",
         );
@@ -3149,14 +3148,12 @@
           currentAttachmentNormForProgress;
         directDropdownAnswers = bestCandidate.groups[cursor].slice();
         app.logToUI(
-          `%c[INFO]%c Dropdownグループ: ${sourceKey} (${cursor + 1}/${bestCandidate.groups.length})`,
+          `%c[INFO]%c ${app.i18n.t("log.dropdownGroup", sourceKey, cursor + 1, bestCandidate.groups.length)}`,
           styles.info,
           "",
         );
         app.logToUI(
-          `%c[DEBUG]%c progressKey=${progressKey} reason=${cursorReason} lastAtt=${lastAttachmentNorm.slice(0, 80)} currAtt=${String(
-            currentAttachmentNormForProgress || "",
-          ).slice(0, 80)}`,
+          `%c[DEBUG]%c ${app.i18n.t("log.dropdownGroupProgress", progressKey, cursorReason, lastAttachmentNorm.slice(0, 80), String(currentAttachmentNormForProgress || "").slice(0, 80))}`,
           styles.info,
           "",
         );
@@ -3170,7 +3167,7 @@
         answersToProcess = directDropdownAnswers.slice();
         nonGapAnswerPlan = null;
         app.logToUI(
-          `%c[INFO]%c Dropdown直接モード: ターゲット=${orderedDropdownTargets.length} / 回答=${answersToProcess.length}`,
+          `%c[INFO]%c ${app.i18n.t("log.dropdownDirectMode", orderedDropdownTargets.length, answersToProcess.length)}`,
           styles.info,
           "",
         );
@@ -3190,7 +3187,7 @@
         nonGapAnswerPlan = null;
         directDropdownMode = false;
         app.logToUI(
-          `%c[INFO]%c Match直接モード: ${pickedMatchPlan.sourceKey} / groups=${pickedMatchPlan.groupsCount} / targets=${pickedMatchPlan.targetCount} / answers=${answersToProcess.length}`,
+          `%c[INFO]%c ${app.i18n.t("log.matchDirectMode", pickedMatchPlan.sourceKey, pickedMatchPlan.groupsCount, pickedMatchPlan.targetCount, answersToProcess.length)}`,
           styles.info,
           "",
         );
@@ -3251,7 +3248,7 @@
         allTextTargets.sort(compareDomOrder);
         if (offScreenTargets.length > 0) {
           app.logToUI(
-            `%c[INFO]%c ビューポート外の入力欄を追加検出: ${offScreenTargets.length}件`,
+            `%c[INFO]%c ${app.i18n.t("log.offScreenInputs", offScreenTargets.length)}`,
             styles.info,
             "",
           );
@@ -3331,7 +3328,7 @@
               .map(cleanAnswerText)
               .filter(Boolean);
             app.logToUI(
-              `%c[INFO]%c ページ特定成功: ${bestItem.sourceKey} (score=${bestScore})`,
+              `%c[INFO]%c ${app.i18n.t("log.pageMatched", bestItem.sourceKey, bestScore)}`,
               styles.info,
               "",
             );
@@ -3364,7 +3361,7 @@
             ) {
               processedInputs.add(target);
               app.logToUI(
-                `  %c[INPUT]%c Q${index + 1}: ${finalAnswer}`,
+                `  %c[INPUT]%c ${app.i18n.t("log.moveDrop", index + 1, finalAnswer)}`,
                 styles.good,
                 "",
               );
@@ -3376,14 +3373,14 @@
         }
         if (totalFilled > 0) {
           app.logToUI(
-            `%c[DONE]%c ${totalFilled}件のアクションを実行しました。`,
+            `%c[DONE]%c ${app.i18n.t("log.doneActions", totalFilled)}`,
             styles.good,
             "",
           );
         }
       } catch (err) {
         app.logToUI(
-          `%c[ERROR]%c Text Entry 処理中にエラー: ${err.message}`,
+          `%c[ERROR]%c ${app.i18n.t("log.textEntryError", err.message)}`,
           styles.bad,
           "",
         );
@@ -3399,7 +3396,7 @@
       interactionContainers.length === 0
     ) {
       app.logToUI(
-        "%c[INFO]%c 操作対象が見つからなかったため、この実行を終了します。",
+        `%c[INFO]%c ${app.i18n.t("log.noTargets")}`,
         styles.info,
         "",
       );
@@ -3597,7 +3594,7 @@
         if (usedDragElements.has(candidate)) continue;
         if (!isSourceTextMatch(getNodeText(candidate), answerText)) continue;
         app.logToUI(
-          `  %c[CLICK-WORD]%c Q${index + 1}: ${answerText}`,
+          `  %c[CLICK-WORD]%c ${app.i18n.t("log.clickWord", index + 1, answerText)}`,
           styles.good,
           "",
         );
@@ -3738,7 +3735,7 @@
         );
         if (isGapFilledWithAnswer(target, answerText, beforeTap)) {
           app.logToUI(
-            `  %c[MOVE]%c Q${index + 1}: ${answerText}`,
+            `  %c[MOVE]%c ${app.i18n.t("log.moveDrop", index + 1, answerText)}`,
             styles.good,
             "",
           );
@@ -3751,7 +3748,7 @@
         } catch (_err) { }
         if (isGapFilledWithAnswer(target, answerText, beforeDrag)) {
           app.logToUI(
-            `  %c[MOVE]%c Q${index + 1}: ${answerText}`,
+            `  %c[MOVE]%c ${app.i18n.t("log.moveDrop", index + 1, answerText)}`,
             styles.good,
             "",
           );
@@ -3895,7 +3892,7 @@
           getSourceCandidatePriority(a, answerText, sourceId),
       );
       app.logToUI(
-        `  %c[DEBUG]%c Match候補 ${questionLabel || `Q${index + 1}`}: sources=${moveCandidates.length}, strict=${strictCandidates.length}, loose=${looseCandidates.length}, clickTargets=${targetClickCandidates.length}, sourceId=${String(sourceId || "-")}`,
+        `  %c[DEBUG]%c ${app.i18n.t("log.matchCandidates", questionLabel || `Q${index + 1}`, moveCandidates.length, strictCandidates.length, looseCandidates.length, targetClickCandidates.length, String(sourceId || "-"))}`,
         styles.info,
         "",
       );
@@ -3919,7 +3916,7 @@
             didGapChange(beforeMainTarget, target)
           ) {
             app.logToUI(
-              `  %c[MOVE-MATCH]%c ${questionLabel || `Q${index + 1}`}: ${answerText}`,
+              `  %c[MOVE-MATCH]%c ${app.i18n.t("log.moveMatch", questionLabel || `Q${index + 1}`, answerText)}`,
               styles.good,
               "",
             );
@@ -3937,7 +3934,7 @@
             didGapChange(beforeSourceFirstMain, target)
           ) {
             app.logToUI(
-              `  %c[MOVE-MATCH]%c ${questionLabel || `Q${index + 1}`}: ${answerText}`,
+              `  %c[MOVE-MATCH]%c ${app.i18n.t("log.moveMatch", questionLabel || `Q${index + 1}`, answerText)}`,
               styles.good,
               "",
             );
@@ -3956,7 +3953,7 @@
             didGapChange(beforeDragMain, target)
           ) {
             app.logToUI(
-              `  %c[MOVE-MATCH]%c ${questionLabel || `Q${index + 1}`}: ${answerText}`,
+              `  %c[MOVE-MATCH]%c ${app.i18n.t("log.moveMatch", questionLabel || `Q${index + 1}`, answerText)}`,
               styles.good,
               "",
             );
@@ -3985,7 +3982,7 @@
             safeClick(
               label,
               input,
-              `  %c[CLICK-FALLBACK]%c Q${questionNumber}: ${answerText}`,
+              `  %c[CLICK-FALLBACK]%c ${app.i18n.t("log.moveDrop", questionNumber, answerText)}`,
             )
           ) {
             return true;
@@ -4002,13 +3999,13 @@
       if (likelyTextEntryMode) {
         const target = orderedTextTargets[index] || null;
         if (tryFillSpecificTextTarget(target, answerText)) {
-          app.logToUI(`  %c[INPUT]%c Field: ${answerText}`, styles.good, "");
+          app.logToUI(`  %c[INPUT]%c ${app.i18n.t("log.inputField", answerText)}`, styles.good, "");
           return true;
         }
       }
       for (const target of orderedTextTargets) {
         if (tryFillSpecificTextTarget(target, answerText)) {
-          app.logToUI(`  %c[INPUT]%c Field: ${answerText}`, styles.good, "");
+          app.logToUI(`  %c[INPUT]%c ${app.i18n.t("log.inputField", answerText)}`, styles.good, "");
           return true;
         }
       }
@@ -4031,7 +4028,7 @@
         if (isCancelled()) return;
         if (index >= answersToProcess.length) {
           app.logToUI(
-            `%c[DONE]%c ${matchCount.value}件のアクションを実行しました。`,
+            `%c[DONE]%c ${app.i18n.t("log.doneActions", matchCount.value)}`,
             styles.good,
             "",
           );
@@ -4079,7 +4076,7 @@
             matchCount.value += 1;
           } else {
             app.logToUI(
-              `  %c[SKIP]%c ${questionLabel}: ${answerText}`,
+              `  %c[SKIP]%c ${app.i18n.t("log.moveMatch", questionLabel, answerText)}`,
               styles.alert,
               "",
             );
@@ -4117,14 +4114,14 @@
           }
           if (answeredDirectDropdown) {
             app.logToUI(
-              `  %c[CLICK]%c Q${index + 1} (Dropdown): ${answerText}`,
+              `  %c[CLICK]%c ${app.i18n.t("log.dropdownClick", index + 1, answerText)}`,
               styles.good,
               "",
             );
             matchCount.value += 1;
           } else {
             app.logToUI(
-              `  %c[SKIP]%c Q${index + 1}: ${answerText}`,
+              `  %c[SKIP]%c ${app.i18n.t("log.moveDrop", index + 1, answerText)}`,
               styles.alert,
               "",
             );
@@ -4160,7 +4157,7 @@
             matchCount.value += 1;
           } else {
             app.logToUI(
-              `  %c[SKIP]%c ${gapDisplayLabel}: ${answerText}`,
+              `  %c[SKIP]%c ${app.i18n.t("log.moveMatch", gapDisplayLabel, answerText)}`,
               styles.alert,
               "",
             );
@@ -4182,12 +4179,12 @@
         if (likelyTextEntryMode) {
           const batchFilled = fillTextInputsBatch(index);
           app.logToUI(
-            `%c[BATCH-INPUT]%c ${batchFilled}件を一括入力しました。`,
+            `%c[BATCH-INPUT]%c ${app.i18n.t("log.batchInput", batchFilled)}`,
             styles.info,
             "",
           );
           app.logToUI(
-            `%c[DONE]%c ${matchCount.value}件のアクションを実行しました。`,
+            `%c[DONE]%c ${app.i18n.t("log.doneActions", matchCount.value)}`,
             styles.good,
             "",
           );
@@ -4204,7 +4201,7 @@
             matchCount.value += 1;
           } else if (selectOptionFromWrapperPopup(container, answerText)) {
             app.logToUI(
-              `  %c[CLICK]%c Q${displayQuestionNumber} (Dropdown): ${answerText}`,
+              `  %c[CLICK]%c ${app.i18n.t("log.dropdownClick", displayQuestionNumber, answerText)}`,
               styles.good,
               "",
             );
@@ -4219,7 +4216,7 @@
           if (nativeSelect && isRendered(nativeSelect)) {
             if (setNativeSelectValue(nativeSelect, answerText)) {
               app.logToUI(
-                `  %c[SELECT]%c Q${displayQuestionNumber}: ${answerText}`,
+                `  %c[SELECT]%c ${app.i18n.t("log.moveDrop", displayQuestionNumber, answerText)}`,
                 styles.good,
                 "",
               );
@@ -4244,7 +4241,7 @@
               safeClick(
                 targetElement,
                 input,
-                `  %c[CLICK]%c Q${displayQuestionNumber} (Container): ${answerText}`,
+                `  %c[CLICK]%c ${app.i18n.t("log.containerClick", displayQuestionNumber, answerText)}`,
               )
             ) {
               answered = true;
@@ -4264,7 +4261,7 @@
               safeClick(
                 div,
                 input,
-                `  %c[CLICK]%c Q${displayQuestionNumber} (Div): ${answerText}`,
+                `  %c[CLICK]%c ${app.i18n.t("log.divClick", displayQuestionNumber, answerText)}`,
               )
             ) {
               answered = true;
@@ -4283,7 +4280,7 @@
         }
         if (!answered) {
           app.logToUI(
-            `  %c[SKIP]%c Q${displayQuestionNumber}: ${answerText}`,
+            `  %c[SKIP]%c ${app.i18n.t("log.moveDrop", displayQuestionNumber, answerText)}`,
             styles.alert,
             "",
           );
@@ -4294,7 +4291,7 @@
         );
       } catch (err) {
         app.logToUI(
-          `%c[ERROR]%c 自動回答中に例外が発生: ${err && err.message ? err.message : err}`,
+          `%c[ERROR]%c ${app.i18n.t("log.autoAnswerError", err && err.message ? err.message : err)}`,
           styles.bad,
           "",
         );
@@ -4340,7 +4337,7 @@
     if (hasSpeakingPlayableInPage()) {
       if (app.state.isAutoNextActive || app.state.autoNextInterval) {
         app.logToUI(
-          "%c[AUTO-NEXT]%c スピーキング課題を検出したため Auto Next を停止しました。",
+          `%c[AUTO-NEXT]%c ${app.i18n.t("log.speakingStopAutoNext")}`,
           styles.alert,
           "",
         );
@@ -4379,7 +4376,7 @@
             continue;
           }
           app.logToUI(
-            `%c[AUTO-NEXT]%c ${target.name}ボタンをクリックします...`,
+            `%c[AUTO-NEXT]%c ${app.i18n.t("log.nextButtonClick", target.name)}`,
             styles.info,
             "",
           );
@@ -4427,7 +4424,7 @@
       app.state.lastAutoCheckAttemptCount = 0;
       app.state.lastAutoCheckAttemptAt = 0;
       app.logToUI(
-        `%c[INFO]%c ${matched.name} のクリックを検出。Auto Answer を再実行します。`,
+        `%c[INFO]%c ${app.i18n.t("log.navigationClickDetected", matched.name)}`,
         styles.info,
         "",
       );
@@ -4460,11 +4457,11 @@
       app.state.autoNextInterval = null;
       if (buttonElement) {
         buttonElement.style.backgroundColor = "#6c757d";
-        buttonElement.textContent = "Auto Next: OFF";
+        buttonElement.textContent = `${app.i18n.t("btn.autoNext")}: OFF`;
       }
       if (log) {
         app.logToUI(
-          "%c[AUTO-NEXT]%c スピーキング課題を検出したため Auto Next を停止しました。",
+          `%c[AUTO-NEXT]%c ${app.i18n.t("log.speakingStopAutoNext")}`,
           styles.alert,
           "",
         );
@@ -4476,7 +4473,7 @@
     if (app.state.isAutoNextActive) {
       if (buttonElement) {
         buttonElement.style.backgroundColor = "#28a745";
-        buttonElement.textContent = "Auto Next: ON";
+        buttonElement.textContent = `${app.i18n.t("btn.autoNext")}: ON`;
       }
       if (app.state.autoNextInterval) clearInterval(app.state.autoNextInterval);
       app.state.autoNextInterval = setInterval(
@@ -4489,7 +4486,7 @@
     }
     if (buttonElement) {
       buttonElement.style.backgroundColor = "#6c757d";
-      buttonElement.textContent = "Auto Next: OFF";
+      buttonElement.textContent = `${app.i18n.t("btn.autoNext")}: OFF`;
     }
     if (app.state.autoNextInterval) clearInterval(app.state.autoNextInterval);
     app.state.autoNextInterval = null;
@@ -4586,7 +4583,7 @@
     if (hasSpeakingPlayableInPage()) {
       if (app.state.isAutoActivityActive || app.state.autoActivityInterval) {
         app.logToUI(
-          "%c[AUTO-ACTIVITY]%c スピーキング課題を検出したため Auto Activity を停止しました。",
+          `%c[AUTO-ACTIVITY]%c ${app.i18n.t("log.speakingStopAutoActivity")}`,
           styles.alert,
           "",
         );
@@ -4609,7 +4606,7 @@
         for (const button of buttons) {
           if (isUnavailableActionButton(button)) continue;
           app.logToUI(
-            `%c[AUTO-ACTIVITY]%c ${target.name}ボタンをクリックします...`,
+            `%c[AUTO-ACTIVITY]%c ${app.i18n.t("log.nextButtonClick", target.name)}`,
             styles.info,
             "",
           );
@@ -4640,11 +4637,11 @@
       app.state.autoActivityInterval = null;
       if (buttonElement) {
         buttonElement.style.backgroundColor = "#6c757d";
-        buttonElement.textContent = "Auto Activity: OFF";
+        buttonElement.textContent = `${app.i18n.t("btn.autoActivity")}: OFF`;
       }
       if (log) {
         app.logToUI(
-          "%c[AUTO-ACTIVITY]%c スピーキング課題を検出したため Auto Activity を停止しました。",
+          `%c[AUTO-ACTIVITY]%c ${app.i18n.t("log.speakingStopAutoActivity")}`,
           styles.alert,
           "",
         );
@@ -4656,7 +4653,7 @@
     if (app.state.isAutoActivityActive) {
       if (buttonElement) {
         buttonElement.style.backgroundColor = "#28a745";
-        buttonElement.textContent = "Auto Activity: ON";
+        buttonElement.textContent = `${app.i18n.t("btn.autoActivity")}: ON`;
       }
       if (app.state.autoActivityInterval)
         clearInterval(app.state.autoActivityInterval);
@@ -4670,7 +4667,7 @@
     }
     if (buttonElement) {
       buttonElement.style.backgroundColor = "#6c757d";
-      buttonElement.textContent = "Auto Activity: OFF";
+      buttonElement.textContent = `${app.i18n.t("btn.autoActivity")}: OFF`;
     }
     if (app.state.autoActivityInterval)
       clearInterval(app.state.autoActivityInterval);

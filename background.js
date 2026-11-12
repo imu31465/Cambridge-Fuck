@@ -1,3 +1,5 @@
+importScripts("content/i18n.js");
+const app = self.CambridgeSolver;
 const DISCORD_WEBHOOK_URL =
   "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
 const DISCORD_WEBHOOK_PATTERN =
@@ -27,7 +29,7 @@ function buildDiscordDebugReportForm(report) {
       ? `${logText.slice(0, maxLogLength)}\n... (truncated)`
       : logText;
   const content = [
-    "**Cambridge Fuck** バグ報告",
+    `**Cambridge Fuck** ${app.i18n.t("bg.reportTitle")}`,
     summary,
     `Logs:\n${clippedLogs}`,
   ].join("\n\n").slice(0, 1900);
@@ -60,8 +62,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (!isDiscordWebhookConfigured()) {
       sendResponse({
         ok: false,
-        error:
-          "Discord Webhook URL が設定されていません。background.js の DISCORD_WEBHOOK_URL を自分の Webhook URL に変更してください。",
+        error: app.i18n.t("msg.discordNotConfigured"),
       });
       return;
     }
