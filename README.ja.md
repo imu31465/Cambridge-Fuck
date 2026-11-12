@@ -84,3 +84,7 @@ const DISCORD_WEBHOOK_URL =
 - 設定（自動機能のON/OFF・速度）は `chrome.storage.local` に保存されます
 - コンテンツスクリプトは `cambridgeone.org` とその全サブフレームに注入されます
 - `data.js` はバックグラウンドの Service Worker 経由で取得します（ホスト権限: `https://content.cambridgeone.org/*`）
+
+## クレジット
+
+オリジナルの CambridgeOne 答え取得プロジェクト [EverStarck/cambridgeFuck](https://github.com/EverStarck/cambridgeFuck)（Python 製・現在はアーカイブ済み）を参考に開発しました。

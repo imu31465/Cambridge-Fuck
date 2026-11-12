@@ -84,3 +84,7 @@ If the placeholder is left as-is, the popup shows an error and nothing is sent.
 - Settings (auto toggles, speed level) are saved in `chrome.storage.local`
 - The content script is injected into `cambridgeone.org` and all of its subframes
 - `data.js` is fetched through the background service worker (host permission: `https://content.cambridgeone.org/*`)
+
+## Credits
+
+Developed with reference to [EverStarck/cambridgeFuck](https://github.com/EverStarck/cambridgeFuck) — the original CambridgeOne answer extractor (Python, now archived).
