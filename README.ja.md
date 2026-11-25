@@ -1,6 +1,6 @@
 # Cambridge Fuck
 
-[英語](README.md) | 日本語
+[英語](README.md) | 日本語 | [中文](README.zh.md)
 
 CambridgeOne のクイズの答えを抽出して自動入力する Chrome 拡張機能（Manifest V3）。
 

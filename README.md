@@ -1,6 +1,6 @@
 # Cambridge Fuck
 
-English | [Japanese](README.ja.md)
+English | [日本語](README.ja.md) | [中文](README.zh.md)
 
 A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne and fills them in automatically.
 
