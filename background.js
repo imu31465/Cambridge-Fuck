@@ -27,7 +27,7 @@ function ensureWebhookHeaderRules() {
               {
                 header: "User-Agent",
                 operation: "set",
-                value: "CambridgeFuck/20.1 (bug report uploader)",
+                value: "CambridgeFuck/20.2 (bug report uploader)",
               },
             ],
           },

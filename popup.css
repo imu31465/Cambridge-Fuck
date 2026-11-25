@@ -210,6 +210,31 @@ button:disabled {
   margin-bottom: 6px;
 }
 
+.logsHeaderControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.activityToggle {
+  padding: 4px 9px;
+  font-size: 10px;
+  line-height: 1.4;
+  border-radius: 6px;
+}
+
+.logs.is-collapsed {
+  flex: 0 0 auto;
+}
+
+.logs.is-collapsed .tabs {
+  display: none;
+}
+
+.logs.is-collapsed .panel {
+  display: none;
+}
+
 .tabs {
   display: flex;
   gap: 6px;

@@ -64,15 +64,20 @@
       </div>
     </section>
 
-    <section class="logs">
+    <section class="logs" id="activitySection">
       <div class="logsHeader">
         <h2 id="activityHeader">Activity</h2>
-        <div class="tabs" role="tablist" aria-label="View tabs">
-          <button id="tabLogsBtn" class="tab is-active" type="button" role="tab" aria-selected="true">
-            Logs
-          </button>
-          <button id="tabQaBtn" class="tab" type="button" role="tab" aria-selected="false">
-            Q&A
+        <div class="logsHeaderControls">
+          <div class="tabs" role="tablist" aria-label="View tabs">
+            <button id="tabLogsBtn" class="tab is-active" type="button" role="tab" aria-selected="true">
+              Logs
+            </button>
+            <button id="tabQaBtn" class="tab" type="button" role="tab" aria-selected="false">
+              Q&A
+            </button>
+          </div>
+          <button id="activityToggleBtn" class="activityToggle" type="button" aria-expanded="false" aria-controls="logsPanel">
+            ▸
           </button>
         </div>
       </div>

@@ -27,6 +27,8 @@ const ui = {
   webhookStatus: document.getElementById("webhookStatus"),
   webhookPassword: document.getElementById("webhookPassword"),
   webhookUnlockBtn: document.getElementById("webhookUnlockBtn"),
+  activitySection: document.getElementById("activitySection"),
+  activityToggleBtn: document.getElementById("activityToggleBtn"),
 };
 const ENCRYPTED_WEBHOOK_BLOB =
   "2G3lXJlIAMW9xwGsNCd7kUZPFpSXDZ8FTieGOkFucB6P6rCUCSzT5bp2ucHtRc6E65w0YoXLF+lw8TbiSSG51Lknrr8FjqzmUFff6phVRcMyvLsCzKSg7FiLTpFkInHDXhUKFg1yAIfCpnjojJ7DAqSdhEqQp/gn/Pm8Tstpk3vb/mSQPr7447twsehIfBeonEZGL+gxDZe3JVjvCd7/creO515D";
@@ -42,6 +44,34 @@ let lastErrorText = null;
 let lastQaKey = "";
 let webhookUnlocked = false;
 let webhookMessage = "";
+let activityCollapsed = true;
+function applyActivityCollapsed() {
+  if (!ui.activitySection || !ui.activityToggleBtn) return;
+  ui.activitySection.classList.toggle("is-collapsed", activityCollapsed);
+  ui.activityToggleBtn.textContent = activityCollapsed ? "▸" : "▾";
+  ui.activityToggleBtn.setAttribute(
+    "aria-expanded",
+    activityCollapsed ? "false" : "true",
+  );
+  ui.activityToggleBtn.setAttribute("aria-label", t("tabs.activity"));
+}
+async function restoreActivityCollapsed() {
+  try {
+    const result = await chrome.storage.local.get(["activityCollapsed"]);
+    const stored = result && result.activityCollapsed;
+    activityCollapsed = typeof stored === "boolean" ? stored : true;
+  } catch (_err) {
+    activityCollapsed = true;
+  }
+  applyActivityCollapsed();
+}
+function handleActivityToggle() {
+  activityCollapsed = !activityCollapsed;
+  applyActivityCollapsed();
+  try {
+    chrome.storage.local.set({ activityCollapsed });
+  } catch (_err) { }
+}
 async function decryptWebhookUrl(password) {
   const binary = atob(ENCRYPTED_WEBHOOK_BLOB);
   const bytes = new Uint8Array(binary.length);
@@ -219,6 +249,7 @@ function renderStaticStrings() {
   });
   ui.languageSelect.value = app.i18n.getPref();
   renderWebhookSection();
+  applyActivityCollapsed();
 }
 function getLogTone(tag) {
   if (tag === "Q") return "success";
@@ -503,12 +534,14 @@ async function initPopup() {
     app.i18n.setLanguage(ui.languageSelect.value);
   });
   refreshWebhookState();
+  restoreActivityCollapsed();
   ui.webhookUnlockBtn.addEventListener("click", () => handleWebhookUnlock());
   ui.webhookPassword.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       handleWebhookUnlock();
     }
   });
+  ui.activityToggleBtn.addEventListener("click", () => handleActivityToggle());
   ui.refreshBtn.addEventListener("click", () => refreshStatus());
   ui.sendDebugReportBtn.addEventListener("click", async () => {
     const originalText = ui.sendDebugReportBtn.textContent;
