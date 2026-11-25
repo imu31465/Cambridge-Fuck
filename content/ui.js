@@ -36,7 +36,14 @@
       url: window.location.href,
       title: document.title || "",
       dataJsUrl,
-      logs: (app.state.recentLogs || []).slice(-200),
+      logs: (app.state.recentLogs || []).slice(-200).map((entry) => {
+        if (entry && typeof entry === "object") {
+          const ts = String(entry.ts || "").trim();
+          const text = String(entry.text || "");
+          return ts ? `[${ts}] ${text}` : text;
+        }
+        return String(entry || "");
+      }),
       userAgent: navigator.userAgent,
       timestamp: Date.now(),
       html: document.documentElement

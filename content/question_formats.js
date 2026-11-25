@@ -276,11 +276,25 @@
     });
     return details;
   }
+  function buildImageChoiceSignature(img) {
+    if (!img) return "";
+    const id = String(img.getAttribute("id") || img.getAttribute("data-id") || "").trim();
+    if (id) return id;
+    const src = String(img.getAttribute("src") || img.getAttribute("data-src") || "");
+    const file = src.split("?")[0].split("/").pop() || "";
+    const stem = file.replace(/\.[a-zA-Z0-9]+$/, "").trim();
+    return stem;
+  }
   function findSimpleChoiceText(scope, answerId) {
     if (!scope || !answerId) return "";
     const choices = Array.from(scope.querySelectorAll("simpleChoice"));
     const found = choices.find((choice) => choice.getAttribute("identifier") === answerId);
-    return found ? found.textContent.trim() : "";
+    if (!found) return "";
+    const text = String(found.textContent || "").trim();
+    if (text) return text;
+    const img = found.querySelector("img");
+    const signature = buildImageChoiceSignature(img);
+    return signature ? `img:${signature}` : "";
   }
   function stripAnswerDecorators(rawValue) {
     return String(rawValue || "").replace(/^\*+/, "").trim();

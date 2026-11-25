@@ -20,16 +20,20 @@
       app.logToUI(`%c[ERROR]%c ${app.i18n.t("log.ajaxNotFound")}`, styles.bad, "");
       return null;
     }
-    const decodedString = decodeHtmlEntitiesRepeatedly(match[1]);
     try {
-      return JSON.parse(decodedString);
-    } catch (err) {
-      app.logToUI(
-        `%c[ERROR]%c ${app.i18n.t("log.jsonParseFailed", err.message)}`,
-        styles.bad,
-        ""
-      );
-      return null;
+      return JSON.parse(match[1]);
+    } catch (_err) {
+      const decodedString = decodeHtmlEntitiesRepeatedly(match[1]);
+      try {
+        return JSON.parse(decodedString);
+      } catch (err) {
+        app.logToUI(
+          `%c[ERROR]%c ${app.i18n.t("log.jsonParseFailed", err.message)}`,
+          styles.bad,
+          ""
+        );
+        return null;
+      }
     }
   }
   function parseXmlEntry(xmlText) {

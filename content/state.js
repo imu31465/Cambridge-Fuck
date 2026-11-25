@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   const app = (window.CambridgeSolver = window.CambridgeSolver || {});
-  app.buildId = "19.9";
+  app.buildId = "20.0";
   console.info(`[CambridgeSolver] build ${app.buildId}`);
   app.styles = {
     bad: "color: red; font-weight: bold;",
@@ -44,10 +44,17 @@
     historyPatched: false,
     messageBridgeInitialized: false,
   };
+  function getLogTimestamp() {
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+  app.getLogTimestamp = getLogTimestamp;
   app.logToUI = function logToUI(format, ...styles) {
     const rawText = format.split("%c").join("");
+    const ts = getLogTimestamp();
     if (rawText) {
-      app.state.recentLogs.push(rawText);
+      app.state.recentLogs.push({ ts, text: rawText });
       if (app.state.recentLogs.length > 300) app.state.recentLogs.shift();
     }
     const { logArea } = app.state;
@@ -56,6 +63,12 @@
     const logLine = document.createElement("div");
     logLine.style.whiteSpace = "pre-wrap";
     logLine.style.wordBreak = "break-all";
+    if (rawText) {
+      const timeSpan = document.createElement("span");
+      timeSpan.textContent = `[${ts}] `;
+      timeSpan.style.color = "#7d8b9d";
+      logLine.appendChild(timeSpan);
+    }
     if (parts[0]) logLine.appendChild(document.createTextNode(parts[0]));
     let styleIndex = 0;
     for (let i = 1; i < parts.length; i += 1) {
@@ -69,11 +82,15 @@
     logArea.scrollTop = logArea.scrollHeight;
   };
   app.logToQA = function logToQA(type, text) {
-    app.state.qaEntries.push({ type, text });
+    app.state.qaEntries.push({ type, text, ts: getLogTimestamp() });
     if (app.state.qaEntries.length > 300) app.state.qaEntries.shift();
     const { qaArea } = app.state;
     if (!qaArea) return;
     const line = document.createElement("div");
+    const timeSpan = document.createElement("span");
+    timeSpan.textContent = `[${getLogTimestamp()}] `;
+    timeSpan.style.color = "#7d8b9d";
+    line.appendChild(timeSpan);
     const typeSpan = document.createElement("span");
     typeSpan.textContent = `[${type}] `;
     typeSpan.style.fontWeight = "bold";

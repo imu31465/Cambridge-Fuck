@@ -1,13 +1,16 @@
 importScripts("content/i18n.js");
 const app = self.CambridgeSolver;
-const DISCORD_WEBHOOK_URL =
-  "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
 const DISCORD_WEBHOOK_PATTERN =
   /^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 const MAX_HTML_BYTES = 2 * 1024 * 1024;
 const MAX_HTML_FILES = 7;
-function isDiscordWebhookConfigured() {
-  return DISCORD_WEBHOOK_PATTERN.test(DISCORD_WEBHOOK_URL);
+async function getWebhookUrl() {
+  try {
+    const result = await chrome.storage.local.get(["webhookUrl"]);
+    const url = String((result && result.webhookUrl) || "").trim();
+    if (url && DISCORD_WEBHOOK_PATTERN.test(url)) return url;
+  } catch (_err) { }
+  return "";
 }
 function buildReportSummary(report) {
   const lines = [
@@ -20,9 +23,17 @@ function buildReportSummary(report) {
   if (report.userAgent) lines.push(`UA: ${report.userAgent}`);
   return lines.join("\n");
 }
+function logEntryToText(entry) {
+  if (entry && typeof entry === "object") {
+    const ts = String(entry.ts || "").trim();
+    const text = String(entry.text || "");
+    return ts ? `[${ts}] ${text}` : text;
+  }
+  return String(entry || "");
+}
 function buildLogText(report) {
   const logs = Array.isArray(report && report.logs)
-    ? report.logs.map((line) => String(line || "")).join("\n")
+    ? report.logs.map(logEntryToText).join("\n")
     : String((report && report.logs) || "");
   return logs || "(empty)";
 }
@@ -109,8 +120,9 @@ function dataUrlToBlob(dataUrl) {
   }
 }
 async function sendDiscordDebugReport(report, sender) {
-  if (!isDiscordWebhookConfigured()) {
-    throw new Error(app.i18n.t("msg.discordNotConfigured"));
+  const webhookUrl = await getWebhookUrl();
+  if (!webhookUrl) {
+    throw new Error(app.i18n.t("msg.webhookLocked"));
   }
   const summary = buildReportSummary(report || {});
   const logText = buildLogText(report || {});
@@ -164,7 +176,7 @@ async function sendDiscordDebugReport(report, sender) {
     form.append(`files[${fileIndex}]`, screenshotBlob, "screenshot.png");
     fileIndex += 1;
   }
-  const response = await fetch(`${DISCORD_WEBHOOK_URL}?wait=true`, {
+  const response = await fetch(`${webhookUrl}?wait=true`, {
     method: "POST",
     body: form,
   });

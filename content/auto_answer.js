@@ -341,6 +341,77 @@
     }
     return raw.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
   }
+  function getImageAnswerSignature(answerText) {
+    const raw = String(answerText || "").trim();
+    const match = raw.match(/^img:\s*(.+)$/i);
+    return match ? match[1].trim() : "";
+  }
+  function getImageSignatureParts(value) {
+    const raw = String(value || "").split("?")[0].trim();
+    if (!raw) return { id: "", file: "", stem: "" };
+    const file = (raw.split("/").pop() || "").toLowerCase();
+    const stem = file.replace(/\.[a-zA-Z0-9]+$/, "");
+    return {
+      id: /^\d+$/.test(raw) ? raw : "",
+      file,
+      stem,
+    };
+  }
+  function escapeRegExpText(value) {
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function elementMatchesImageSignature(element, signature) {
+    if (!element || typeof element.querySelectorAll !== "function") return false;
+    const sig = getImageSignatureParts(signature);
+    if (!sig.id && !sig.file && !sig.stem) return false;
+    const idPattern = sig.id
+      ? new RegExp(`(^|_)${escapeRegExpText(sig.id)}(_|$)`)
+      : null;
+    const imgs = element.querySelectorAll("img");
+    for (const img of imgs) {
+      const domId = String(
+        img.getAttribute("id") ||
+          img.getAttribute("data-id") ||
+          img.getAttribute("data-image-id") ||
+          "",
+      ).trim();
+      const src = String(
+        img.getAttribute("src") ||
+          img.currentSrc ||
+          img.getAttribute("data-src") ||
+          "",
+      );
+      let parts = { id: "", file: "", stem: "" };
+      try {
+        parts = getImageSignatureParts(decodeURIComponent(src));
+      } catch (_err) {
+        parts = getImageSignatureParts(src);
+      }
+      if (sig.id && domId && domId === sig.id) return true;
+      if (sig.file && parts.file && parts.file === sig.file) return true;
+      if (sig.stem && parts.stem && parts.stem === sig.stem) return true;
+      if (idPattern && parts.stem && idPattern.test(parts.stem)) return true;
+      if (parts.id && sig.stem) {
+        const sigPattern = new RegExp(
+          `(^|_)${escapeRegExpText(parts.id)}(_|$)`,
+        );
+        if (sigPattern.test(sig.stem)) return true;
+      }
+    }
+    return false;
+  }
+  function getChoiceIdentifierFromClass(element) {
+    const className = String((element && element.className) || "");
+    const match = className.match(/choice-c(\d+)-(\d+)/i);
+    return match ? `c${match[1]}_${match[2]}` : "";
+  }
+  function matchesChoiceIdentifier(element, answerText) {
+    if (!element) return false;
+    const raw = String(answerText || "").trim().replace(/\s+/g, "");
+    if (!/^c\d+_\d+$/i.test(raw)) return false;
+    const classId = getChoiceIdentifierFromClass(element);
+    return !!classId && classId.toLowerCase() === raw.toLowerCase();
+  }
   function normalizeComparableText(str) {
     return String(str || "")
       .normalize("NFKD")
@@ -1480,10 +1551,42 @@
       scopeRoot: bestRoot,
     };
   }
+  function getSortingZoneTitle(node) {
+    if (
+      !node ||
+      typeof node.matches !== "function" ||
+      !node.matches(".drop_zone.osSorting__category")
+    ) {
+      return "";
+    }
+    const scope =
+      (typeof node.closest === "function"
+        ? node.closest(".dds_target_view__zone")
+        : null) ||
+      node.parentElement ||
+      node;
+    let titleEl = scope && typeof scope.querySelector === "function"
+      ? scope.querySelector(".category_title")
+      : null;
+    if (
+      !titleEl &&
+      node.previousElementSibling &&
+      typeof node.previousElementSibling.matches === "function" &&
+      node.previousElementSibling.matches(".category_title")
+    ) {
+      titleEl = node.previousElementSibling;
+    }
+    const titleText = titleEl ? getNodeText(titleEl) : "";
+    if (titleText) return titleText;
+    const aria = String(node.getAttribute("aria-label") || "");
+    const match = aria.match(/^Category\s+(.*?)(?:\.\s*Place|$)/i);
+    return match ? match[1].trim() : "";
+  }
   function collectVisibleMatchTargets() {
     const targets = [];
     const seen = new Set();
     const selectors = [
+      ".drop_zone.osSorting__category",
       ".drop_area.target",
       ".gap_match_gap_view",
       ".gapMatchInteraction [data-target]",
@@ -1497,7 +1600,7 @@
       if (!isRendered(node)) return;
       if (node.closest("[aria-hidden='true']")) return;
       if (isSolverUiNode(node)) return;
-      const text = getNodeText(node);
+      const text = getSortingZoneTitle(node) || getNodeText(node);
       if (!text) return;
       if (!/[A-Za-z]/.test(text)) return;
       targets.push(node);
@@ -1687,6 +1790,12 @@
         : [];
       if (questions.length === 0 || groups.length === 0) return;
       const targetByIdentifier = new Map();
+      const sortingZones = targets.filter(
+        (node) =>
+          node &&
+          typeof node.matches === "function" &&
+          node.matches(".drop_zone.osSorting__category"),
+      );
       targets.forEach((target) => {
         if (!target || typeof target.getAttribute !== "function") return;
         [
@@ -1707,6 +1816,21 @@
           if (!raw) return;
           targetByIdentifier.set(raw, target);
         });
+        if (sortingZones.includes(target)) {
+          const registerZoneKey = (key) => {
+            const norm = String(key || "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .toLowerCase();
+            if (norm && !targetByIdentifier.has(norm)) {
+              targetByIdentifier.set(norm, target);
+            }
+          };
+          const zoneTitle = getSortingZoneTitle(target);
+          registerZoneKey(zoneTitle);
+          registerZoneKey(`category ${zoneTitle}`);
+          registerZoneKey(`t${sortingZones.indexOf(target)}`);
+        }
       });
       const usedTargets = new Set();
       const matchedTargetsByQuestion = [];
@@ -2407,8 +2531,20 @@
         clientY: y,
         dataTransfer,
       });
+    const createTargetMouseEvent = (type, x, y) =>
+      new (targetWindow.MouseEvent || MouseEvent)(type, {
+        bubbles: true,
+        cancelable: true,
+        view: targetWindow,
+        buttons: 1,
+        which: 1,
+        clientX: x,
+        clientY: y,
+      });
     sourceNode.dispatchEvent(createMouseEvent("mousedown", srcX, srcY));
+    sourceNode.dispatchEvent(createMouseEvent("mousemove", srcX, srcY));
     sourceNode.dispatchEvent(createDragEvent("dragstart", srcX, srcY));
+    targetNode.dispatchEvent(createTargetMouseEvent("mousemove", tgtX, tgtY));
     targetNode.dispatchEvent(
       new (targetWindow.DragEvent || DragEvent)("dragenter", {
         bubbles: true,
@@ -2446,6 +2582,7 @@
       }),
     );
     sourceNode.dispatchEvent(createDragEvent("dragend", srcX, srcY));
+    targetNode.dispatchEvent(createTargetMouseEvent("mouseup", tgtX, tgtY));
     sourceNode.dispatchEvent(createMouseEvent("mouseup", srcX, srcY));
     sourceNode.click();
     targetNode.click();
@@ -3855,7 +3992,7 @@
       const targetDoc = target.ownerDocument;
       const preferredRoot =
         target.closest(
-          ".matchInteraction, .simpleMatchSet, .gapMatchInteraction, .que, fieldset",
+          ".matchInteraction, .simpleMatchSet, .gapMatchInteraction, .que, fieldset, .dds_view",
         ) ||
         (gapScopeRoot && gapScopeRoot.ownerDocument === targetDoc
           ? gapScopeRoot
@@ -4226,6 +4363,29 @@
           }
         }
         if (!answered && container) {
+          const imageSignature = getImageAnswerSignature(answerText);
+          if (imageSignature) {
+            const imageDivs = container.querySelectorAll(
+              ".input-radio, .input-checkbox, [role='radio'], [role='checkbox'], .simpleChoice, .choice",
+            );
+            for (const div of imageDivs) {
+              if (!elementMatchesImageSignature(div, imageSignature)) continue;
+              const input = div.querySelector("input");
+              if (
+                safeClick(
+                  div,
+                  input,
+                  `  %c[CLICK]%c ${app.i18n.t("log.containerClick", displayQuestionNumber, answerText)}`,
+                )
+              ) {
+                answered = true;
+                matchCount.value += 1;
+                break;
+              }
+            }
+          }
+        }
+        if (!answered && container) {
           const labels = container.querySelectorAll("label");
           for (const label of labels) {
             if (!isAnswerTextMatch(label.textContent, answerText)) continue;
@@ -4255,7 +4415,11 @@
             ".input-radio, .input-checkbox, .simpleChoice, .choice, [role='checkbox'], [role='radio']",
           );
           for (const div of inputDivs) {
-            if (!isAnswerTextMatch(div.textContent, answerText)) continue;
+            if (
+              !isAnswerTextMatch(div.textContent, answerText) &&
+              !matchesChoiceIdentifier(div, answerText)
+            )
+              continue;
             const input = div.querySelector("input");
             if (
               safeClick(

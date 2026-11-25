@@ -23,7 +23,16 @@ const ui = {
   languageLabelText: document.getElementById("languageLabelText"),
   speedLabelText: document.getElementById("speedLabelText"),
   activityHeader: document.getElementById("activityHeader"),
+  webhookLabelText: document.getElementById("webhookLabelText"),
+  webhookStatus: document.getElementById("webhookStatus"),
+  webhookPassword: document.getElementById("webhookPassword"),
+  webhookUnlockBtn: document.getElementById("webhookUnlockBtn"),
 };
+const ENCRYPTED_WEBHOOK_BLOB =
+  "2G3lXJlIAMW9xwGsNCd7kUZPFpSXDZ8FTieGOkFucB6P6rCUCSzT5bp2ucHtRc6E65w0YoXLF+lw8TbiSSG51Lknrr8FjqzmUFff6phVRcMyvLsCzKSg7FiLTpFkInHDXhUKFg1yAIfCpnjojJ7DAqSdhEqQp/gn/Pm8Tstpk3vb/mSQPr7447twsehIfBeonEZGL+gxDZe3JVjvCd7/creO515D";
+const WEBHOOK_KDF_ITERATIONS = 310000;
+const DISCORD_WEBHOOK_PATTERN =
+  /^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 let activeTabId = null;
 let refreshTimer = null;
 let activeView = "logs";
@@ -31,6 +40,99 @@ let lastLogsKey = "";
 let lastStatus = null;
 let lastErrorText = null;
 let lastQaKey = "";
+let webhookUnlocked = false;
+let webhookMessage = "";
+async function decryptWebhookUrl(password) {
+  const binary = atob(ENCRYPTED_WEBHOOK_BLOB);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const salt = bytes.slice(0, 16);
+  const iv = bytes.slice(16, 28);
+  const data = bytes.slice(28);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: WEBHOOK_KDF_ITERATIONS,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"],
+  );
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return new TextDecoder().decode(plain);
+}
+function renderWebhookSection() {
+  if (!ui.webhookUnlockBtn) return;
+  const unlocked = webhookUnlocked === true;
+  ui.webhookLabelText.textContent = t("labels.webhook");
+  ui.webhookUnlockBtn.textContent = unlocked
+    ? t("btn.webhookReset")
+    : t("btn.unlock");
+  ui.webhookStatus.textContent = webhookMessage || (unlocked
+    ? t("webhook.unlocked")
+    : t("webhook.locked"));
+  ui.webhookStatus.classList.toggle("is-unlocked", unlocked && !webhookMessage);
+  ui.webhookStatus.classList.toggle("is-error", webhookMessage !== "");
+  ui.webhookPassword.style.display = unlocked ? "none" : "";
+  ui.webhookPassword.placeholder = t("webhook.passwordPlaceholder");
+}
+async function refreshWebhookState() {
+  try {
+    const result = await chrome.storage.local.get(["webhookUrl"]);
+    const url = String((result && result.webhookUrl) || "").trim();
+    webhookUnlocked = !!(url && DISCORD_WEBHOOK_PATTERN.test(url));
+  } catch (_err) {
+    webhookUnlocked = false;
+  }
+  webhookMessage = "";
+  renderWebhookSection();
+}
+async function handleWebhookUnlock() {
+  if (webhookUnlocked) {
+    try {
+      await chrome.storage.local.remove("webhookUrl");
+    } catch (_err) { }
+    webhookUnlocked = false;
+    webhookMessage = t("webhook.resetOk");
+    renderWebhookSection();
+    return;
+  }
+  const password = ui.webhookPassword.value || "";
+  if (!password) {
+    ui.webhookPassword.focus();
+    return;
+  }
+  ui.webhookUnlockBtn.disabled = true;
+  ui.webhookUnlockBtn.textContent = t("webhook.unlocking");
+  try {
+    const url = await decryptWebhookUrl(password);
+    if (!DISCORD_WEBHOOK_PATTERN.test(url)) {
+      throw new Error("invalid webhook shape");
+    }
+    await chrome.storage.local.set({ webhookUrl: url });
+    webhookUnlocked = true;
+    ui.webhookPassword.value = "";
+    webhookMessage = t("webhook.unlockOk");
+  } catch (_err) {
+    webhookUnlocked = false;
+    webhookMessage = t("webhook.unlockFailed");
+  } finally {
+    ui.webhookUnlockBtn.disabled = false;
+    renderWebhookSection();
+  }
+}
 function setButtonsDisabled(disabled) {
   ui.scanBtn.disabled = disabled;
   ui.answerNowBtn.disabled = disabled;
@@ -111,11 +213,12 @@ function renderStaticStrings() {
     "aria-label",
     t("labels.speedLevel", Number(ui.speedLevelRange.value || 3)),
   );
-  const optionKeys = ["ui.auto", "ui.english", "ui.japanese"];
+  const optionKeys = ["ui.auto", "ui.english", "ui.japanese", "ui.chinese"];
   Array.from(ui.languageSelect.options).forEach((option, index) => {
     if (optionKeys[index]) option.textContent = t(optionKeys[index]);
   });
   ui.languageSelect.value = app.i18n.getPref();
+  renderWebhookSection();
 }
 function getLogTone(tag) {
   if (tag === "Q") return "success";
@@ -170,37 +273,73 @@ function restoreScrollState(container, state) {
   const grownBy = Math.max(0, container.scrollHeight - state.scrollHeight);
   container.scrollTop = Math.max(0, state.scrollTop + grownBy);
 }
+function normalizeLogEntry(entry) {
+  if (entry && typeof entry === "object") {
+    return {
+      ts: String(entry.ts || "").trim(),
+      text: String(entry.text || ""),
+    };
+  }
+  return { ts: "", text: String(entry || "") };
+}
+function splitLogTag(text) {
+  const line = String(text || "");
+  const match = line.match(/^\s*\[([A-Za-z0-9-]+)\]\s*([\s\S]*)$/);
+  if (match) {
+    return { tag: match[1].toUpperCase(), text: match[2] };
+  }
+  return { tag: "LOG", text: line };
+}
 function renderLogs(logs) {
   if (!ui.logsArea) return;
-  const logLines = Array.isArray(logs)
-    ? logs.map((line) => String(line || ""))
+  const logEntries = Array.isArray(logs)
+    ? logs.map(normalizeLogEntry).filter((entry) => entry.text)
     : [];
-  const nextKey = logLines.join("\n");
+  const nextKey = logEntries
+    .map((entry) => `${entry.ts}\u0000${entry.text}`)
+    .join("\n");
   if (nextKey === lastLogsKey) return;
   const scrollState = captureScrollState(ui.logsArea);
   lastLogsKey = nextKey;
   ui.logsArea.textContent = "";
-  if (logLines.length === 0) {
+  if (logEntries.length === 0) {
     appendEmptyLine(ui.logsArea, t("popup.noLogs"));
     restoreScrollState(ui.logsArea, scrollState);
     return;
   }
-  logLines.forEach((lineText) => {
-    const line = String(lineText || "");
-    const match = line.match(/^\s*\[([A-Za-z0-9-]+)\]\s*(.*)$/);
-    const tag = match ? match[1].toUpperCase() : "LOG";
-    const text = match ? match[2] : line;
-    const tone = getLogTone(tag);
+  const groups = [];
+  logEntries.forEach((entry) => {
+    const parsed = splitLogTag(entry.text);
+    const key = `${entry.ts}|${parsed.tag}|${parsed.text}`;
+    const previous = groups[groups.length - 1];
+    if (previous && previous.key === key) {
+      previous.count += 1;
+      return;
+    }
+    groups.push({ key, ts: entry.ts, tag: parsed.tag, text: parsed.text, count: 1 });
+  });
+  groups.forEach((group) => {
+    const tone = getLogTone(group.tag);
     const row = document.createElement("div");
     row.className = `logLine${tone ? ` tone-${tone}` : ""}`;
+    const timeEl = document.createElement("span");
+    timeEl.className = "logTime";
+    timeEl.textContent = group.ts || "--:--:--";
     const tagEl = document.createElement("span");
     tagEl.className = "logTag";
-    tagEl.textContent = `[${tag}]`;
+    tagEl.textContent = group.tag;
     const textEl = document.createElement("span");
     textEl.className = "logText";
-    textEl.textContent = text;
+    textEl.textContent = group.text;
+    row.appendChild(timeEl);
     row.appendChild(tagEl);
     row.appendChild(textEl);
+    if (group.count > 1) {
+      const countEl = document.createElement("span");
+      countEl.className = "logCount";
+      countEl.textContent = `×${group.count}`;
+      row.appendChild(countEl);
+    }
     ui.logsArea.appendChild(row);
   });
   restoreScrollState(ui.logsArea, scrollState);
@@ -211,9 +350,12 @@ function renderQaEntries(entries) {
     ? entries.map((entry) => ({
       type: String((entry && entry.type) || ""),
       text: String((entry && entry.text) || ""),
+      ts: String((entry && entry.ts) || ""),
     }))
     : [];
-  const nextKey = rows.map((row) => `${row.type}\u0000${row.text}`).join("\n");
+  const nextKey = rows
+    .map((row) => `${row.type}\u0000${row.ts}\u0000${row.text}`)
+    .join("\n");
   if (nextKey === lastQaKey) return;
   const scrollState = captureScrollState(ui.qaArea);
   lastQaKey = nextKey;
@@ -226,15 +368,19 @@ function renderQaEntries(entries) {
   rows.forEach((entry) => {
     if (!entry.type) return;
     const row = document.createElement("div");
-    row.className = "qaLine";
-    const badge = document.createElement("span");
     const type = String(entry.type);
     const isQuestion = type.toUpperCase() === "Q";
+    row.className = `qaLine ${isQuestion ? "qa-Q" : "qa-A"}`;
+    const timeEl = document.createElement("span");
+    timeEl.className = "qaTime";
+    timeEl.textContent = entry.ts || "--:--:--";
+    const badge = document.createElement("span");
     badge.className = `qaType ${isQuestion ? "qaTypeQ" : "qaTypeA"}`;
     badge.textContent = `[${type}]`;
     const text = document.createElement("span");
     text.className = "qaText";
     text.textContent = String(entry.text || "");
+    row.appendChild(timeEl);
     row.appendChild(badge);
     row.appendChild(text);
     ui.qaArea.appendChild(row);
@@ -355,6 +501,13 @@ async function initPopup() {
   });
   ui.languageSelect.addEventListener("change", () => {
     app.i18n.setLanguage(ui.languageSelect.value);
+  });
+  refreshWebhookState();
+  ui.webhookUnlockBtn.addEventListener("click", () => handleWebhookUnlock());
+  ui.webhookPassword.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      handleWebhookUnlock();
+    }
   });
   ui.refreshBtn.addEventListener("click", () => refreshStatus());
   ui.sendDebugReportBtn.addEventListener("click", async () => {

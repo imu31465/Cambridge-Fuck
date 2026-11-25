@@ -39,6 +39,7 @@
           <option value="auto">Auto</option>
           <option value="en">English</option>
           <option value="ja">日本語</option>
+          <option value="zh">中文</option>
         </select>
       </div>
       <div class="settingBox">
@@ -47,6 +48,19 @@
           <span id="speedLevelValue" class="speedValue">L3</span>
         </label>
         <input id="speedLevelRange" type="range" min="1" max="5" step="1" value="3" />
+      </div>
+    </section>
+
+    <section class="settingRow">
+      <div class="settingBox webhookBox">
+        <label for="webhookPassword" class="speedLabel">
+          <span id="webhookLabelText">Webhook</span>
+          <span id="webhookStatus" class="webhookStatus">Locked</span>
+        </label>
+        <div class="webhookRow">
+          <input id="webhookPassword" type="password" autocomplete="off" />
+          <button id="webhookUnlockBtn" type="button">Unlock</button>
+        </div>
       </div>
     </section>
 
