@@ -1,6 +1,6 @@
 # Cambridge Fuck
 
-English | [日本語](README.ja.md)
+English | [Japanese](README.ja.md)
 
 A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne and fills them in automatically.
 
@@ -13,7 +13,7 @@ A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne an
 - Stops everything on incorrect-answer feedback (Auto Wrong Stop)
 - Pauses on speaking tasks
 - 5 speed levels
-- UI in English, 日本語, or 中文 (auto-detected by default)
+- UI language: English, Japanese, or Chinese (auto-detected by default)
 - Popup with logs (timestamped, deduplicated) and a Q&A view
 
 ## Install
