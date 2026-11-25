@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Cambridge Fuck",
-  "version": "20.0",
+  "version": "20.1",
   "default_locale": "en",
   "description": "__MSG_extDescription__",
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "declarativeNetRequest"],
   "host_permissions": [
     "https://content.cambridgeone.org/*",
     "https://cambridgeone.org/*",

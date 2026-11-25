@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   const app = (window.CambridgeSolver = window.CambridgeSolver || {});
-  app.buildId = "20.0";
+  app.buildId = "20.1";
   console.info(`[CambridgeSolver] build ${app.buildId}`);
   app.styles = {
     bad: "color: red; font-weight: bold;",

@@ -4,6 +4,44 @@ const DISCORD_WEBHOOK_PATTERN =
   /^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 const MAX_HTML_BYTES = 2 * 1024 * 1024;
 const MAX_HTML_FILES = 7;
+const WEBHOOK_HEADER_RULE_ID = 1;
+function ensureWebhookHeaderRules() {
+  try {
+    if (
+      !chrome.declarativeNetRequest ||
+      typeof chrome.declarativeNetRequest.updateSessionRules !== "function"
+    ) {
+      return;
+    }
+    chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [WEBHOOK_HEADER_RULE_ID],
+      addRules: [
+        {
+          id: WEBHOOK_HEADER_RULE_ID,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              { header: "Origin", operation: "remove" },
+              { header: "Referer", operation: "remove" },
+              {
+                header: "User-Agent",
+                operation: "set",
+                value: "CambridgeFuck/20.1 (bug report uploader)",
+              },
+            ],
+          },
+          condition: {
+            regexFilter:
+              "^https://(?:canary\\.|ptb\\.)?discord(?:app)?\\.com/api/webhooks/",
+            resourceTypes: ["xmlhttprequest"],
+          },
+        },
+      ],
+    }).catch(() => { });
+  } catch (_err) { }
+}
+ensureWebhookHeaderRules();
 async function getWebhookUrl() {
   try {
     const result = await chrome.storage.local.get(["webhookUrl"]);

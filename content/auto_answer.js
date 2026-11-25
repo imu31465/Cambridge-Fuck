@@ -1209,22 +1209,34 @@
     if (matchTargets.length > 0) {
       const pickedMatchPlan = pickMatchInteractionPlan(matchTargets);
       if (pickedMatchPlan && Array.isArray(pickedMatchPlan.plan)) {
-        const pendingAnswers = Array.from(
-          new Set(
-            pickedMatchPlan.plan
-              .map((entry) => cleanAnswerText(entry && entry.answer))
-              .filter((answer) => answer.length > 0),
-          ),
+        const planEntries = pickedMatchPlan.plan.filter(
+          (entry) => entry && entry.target,
         );
-        for (const answer of pendingAnswers) {
-          const answerNorm = app.normalize(answer);
-          if (!answerNorm) continue;
-          const hasSource = getAllSearchRoots().some((root) =>
-            getDraggableCandidatesFromRoot(root).some((candidate) =>
-              isSourceTextMatch(getNodeText(candidate), answer),
-            ),
+        for (const entry of planEntries) {
+          const answer = cleanAnswerText(entry.answer);
+          if (!answer) continue;
+          if (!app.normalize(answer)) continue;
+          let sourceExists = false;
+          let sourcePlaced = false;
+          getAllSearchRoots().some((root) =>
+            getDraggableCandidatesFromRoot(root).some((candidate) => {
+              if (
+                typeof candidate.closest === "function" &&
+                candidate.closest("[aria-hidden='true']")
+              ) {
+                return false;
+              }
+              if (!isSourceTextMatch(getNodeText(candidate), answer)) {
+                return false;
+              }
+              sourceExists = true;
+              if (entry.target.contains(candidate)) {
+                sourcePlaced = true;
+              }
+              return sourcePlaced;
+            }),
           );
-          if (hasSource) return true;
+          if (sourceExists && !sourcePlaced) return true;
         }
       }
     }
@@ -4006,6 +4018,24 @@
       );
       const candidates = strictCandidates.concat(looseCandidates);
       const targetClickCandidates = getMatchTargetClickCandidates(target);
+      const alreadyPlaced = candidates.find(
+        (candidate) =>
+          !usedDragElements.has(candidate) &&
+          candidate !== target &&
+          !candidate.contains(target) &&
+          target.contains(candidate) &&
+          (isSourceTextMatch(getNodeText(candidate), answerText) ||
+            matchesSourceIdentifier(candidate, sourceId)),
+      );
+      if (alreadyPlaced) {
+        usedDragElements.add(alreadyPlaced);
+        app.logToUI(
+          `  %c[MOVE-MATCH]%c ${app.i18n.t("log.moveMatch", questionLabel || `Q${index + 1}`, answerText)}`,
+          styles.good,
+          "",
+        );
+        return true;
+      }
       const moveCandidates = candidates.filter((candidate) => {
         if (usedDragElements.has(candidate)) return false;
         if (
@@ -4532,10 +4562,15 @@
             isCheckButton &&
             app.state.lastAutoCheckButton === button &&
             app.state.lastAutoCheckSignature === checkStateSignature;
+          const checkAttemptCount = Number(
+            app.state.lastAutoCheckAttemptCount || 0,
+          );
+          const checkRetryDelayMs =
+            checkAttemptCount >= 4 ? 4000 : checkAttemptCount >= 3 ? 2000 : 800;
           if (
             sameCheckState &&
-            (now - Number(app.state.lastAutoCheckAttemptAt || 0) < 800 ||
-              Number(app.state.lastAutoCheckAttemptCount || 0) >= 2)
+            now - Number(app.state.lastAutoCheckAttemptAt || 0) <
+              checkRetryDelayMs
           ) {
             continue;
           }
@@ -4718,6 +4753,7 @@
   app.applyAutoAnswerButtonState = applyAutoAnswerButtonState;
   app.maybeAutoAnswer = maybeAutoAnswer;
   app.checkNextBtn = checkNextBtn;
+  app.hasPendingAnswerTargets = hasPendingAnswerTargets;
   app.toggleAutoNext = toggleAutoNext;
   app.setSpeedLevel = setSpeedLevel;
   app.getSpeedLevel = getSpeedLevel;
