@@ -43,14 +43,19 @@ A Chrome extension (Manifest V3) that extracts quiz answers from CambridgeOne an
 | Auto Activity / 自動アクティビティ | Auto-click NEXT ACTIVITY |
 | Auto Wrong Stop / 自動誤答停止 | Stop everything when an incorrect answer is detected |
 | Refresh / 状態更新 | Refresh the popup status |
-| Bug Report / バグ報告 | Send logs to a Discord webhook (see below) |
+| Bug Report / バグ報告 | Send a debug report (logs + full page HTML) to a Discord webhook (see below) |
 
 5. Adjust the speed with the L1–L5 slider
 6. Logs and extracted Q&A can be viewed in the **Logs** / **Q&A** tabs
 
 ## Bug report webhook (optional)
 
-The **バグ報告 (Bug report)** button sends recent logs to a Discord webhook.
+The **バグ報告 (Bug report)** button sends a debug report to a Discord webhook. The report includes:
+
+- recent logs and a JSON summary of the session
+- the full HTML of the page and each frame (`page.html`, `frame-*.html`)
+- a screenshot of the visible tab (`screenshot.png`)
+
 This repository ships with a placeholder URL, so the button does nothing until you configure your own:
 
 1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**, then copy the webhook URL
@@ -68,7 +73,7 @@ If the placeholder is left as-is, the popup shows an error and nothing is sent.
 ```
 .
 ├── manifest.json        # Manifest V3
-├── background.js        # Service worker: data.js fetch proxy & bug-report form
+├── background.js        # Service worker: data.js fetch proxy & bug-report uploader
 ├── popup.html           # Popup markup
 ├── popup.css            # Popup styles
 ├── popup.js             # Popup logic

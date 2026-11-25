@@ -43,14 +43,19 @@ CambridgeOne のクイズの答えを抽出して、自動入力できる Chrome
 | 自動アクティビティ / Auto Activity | NEXT ACTIVITY を自動クリック |
 | 自動誤答停止 / Auto Wrong Stop | 不正解を検出したら全自動機能を停止 |
 | 状態更新 / Refresh | ポップアップの状態を更新 |
-| バグ報告 / Bug Report | ログを Discord Webhook へ送信（下記参照） |
+| バグ報告 / Bug Report | デバッグレポート（ログ＋ページ全体のHTML）を Discord Webhook へ送信（下記参照） |
 
 5. 速度は L1〜L5 のスライダーで調整
 6. ログと抽出した Q&A は **ログ** / **Q&A** タブで確認できます
 
 ## バグ報告 Webhook（任意設定）
 
-**バグ報告** ボタンは、直近のログを Discord Webhook へ送信します。
+**バグ報告** ボタンは、デバッグレポートを Discord Webhook へ送信します。レポートには次の内容が含まれます:
+
+- 直近のログとセッションの JSON サマリー
+- ページ全体と各フレームの HTML（`page.html`, `frame-*.html`）
+- 表示中のタブのスクリーンショット（`screenshot.png`）
+
 このリポジトリでは Webhook URL がプレースホルダーになっているため、設定するまでボタンは機能しません。
 
 1. Discord で **サーバー設定 → 連携 → Webhook → 新しい Webhook** を作成し、Webhook URL をコピーする
@@ -68,7 +73,7 @@ const DISCORD_WEBHOOK_URL =
 ```
 .
 ├── manifest.json        # Manifest V3
-├── background.js        # Service Worker: data.js 取得プロキシ & バグ報告フォーム生成
+├── background.js        # Service Worker: data.js 取得プロキシ & バグレポート送信
 ├── popup.html           # ポップアップのマークアップ
 ├── popup.css            # ポップアップのスタイル
 ├── popup.js             # ポップアップのロジック

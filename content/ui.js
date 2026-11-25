@@ -34,61 +34,39 @@
     return {
       buildId: app.buildId || "unknown",
       url: window.location.href,
+      title: document.title || "",
       dataJsUrl,
       logs: (app.state.recentLogs || []).slice(-200),
       userAgent: navigator.userAgent,
       timestamp: Date.now(),
+      html: document.documentElement
+        ? document.documentElement.outerHTML
+        : "",
+      frames: Array.from(document.querySelectorAll("iframe, frame"))
+        .map((frame) => String(frame.src || frame.getAttribute("src") || ""))
+        .filter(Boolean),
     };
   }
   function sendDebugReportToDiscord() {
     return new Promise((resolve, reject) => {
       const report = collectDebugReport();
       chrome.runtime.sendMessage(
-        { type: "getDiscordDebugReportForm", report },
+        { type: "sendDiscordDebugReport", report },
         (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
             return;
           }
-          if (!response || !response.action || !response.fields) {
+          if (!response || response.ok !== true) {
             reject(
               new Error(
                 (response && response.error) ||
-                  app.i18n.t("msg.discordFormFailed"),
+                  app.i18n.t("msg.discordSendFailed", "-"),
               ),
             );
             return;
           }
-          const frame = document.createElement("iframe");
-          const form = document.createElement("form");
-          const frameName = `discord-report-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-          frame.name = frameName;
-          frame.hidden = true;
-          frame.setAttribute("aria-hidden", "true");
-          form.method = "POST";
-          form.action = response.action;
-          form.target = frameName;
-          form.enctype = "application/x-www-form-urlencoded";
-          for (const [name, value] of Object.entries(response.fields)) {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = name;
-            input.value = String(value);
-            form.appendChild(input);
-          }
-          document.documentElement.append(frame, form);
-          try {
-            form.submit();
-            form.remove();
-            window.setTimeout(() => frame.remove(), 60000);
-            resolve({ ok: true, dispatched: true });
-          } catch (error) {
-            frame.remove();
-            form.remove();
-            reject(error);
-          }
+          resolve(response);
         },
       );
     });
@@ -191,7 +169,7 @@
         sendDebugReportToDiscord()
           .then(() => {
             app.logToUI(
-              `%c[INFO]%c ${app.i18n.t("msg.discordQueued")}`,
+              `%c[INFO]%c ${app.i18n.t("msg.discordSent")}`,
               app.styles.success,
               "",
             );

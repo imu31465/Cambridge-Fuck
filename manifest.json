@@ -1,12 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Cambridge Fuck",
-  "version": "19.8",
+  "version": "19.9",
   "default_locale": "en",
   "description": "__MSG_extDescription__",
-  "permissions": ["storage"],
+  "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
-    "https://content.cambridgeone.org/*"
+    "https://content.cambridgeone.org/*",
+    "https://cambridgeone.org/*",
+    "https://*.cambridgeone.org/*",
+    "https://discord.com/*",
+    "https://canary.discord.com/*",
+    "https://ptb.discord.com/*",
+    "https://discordapp.com/*"
   ],
   "background": {
     "service_worker": "background.js"
